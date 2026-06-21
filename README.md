@@ -54,3 +54,9 @@ docker compose up -d
 ```
 
 The app requires your own X Developer app credentials and AI provider key. See `docs/plans/2026-06-21-bookmarx-technical-plan.md` for the full implementation plan.
+
+## Docs
+
+- `docs/self-hosting.md`
+- `docs/x-api-setup.md`
+- `docs/ai-providers.md`
