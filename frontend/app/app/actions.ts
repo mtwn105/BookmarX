@@ -52,3 +52,8 @@ export async function archiveBookmark(formData: FormData) {
   revalidatePath("/app")
   revalidatePath(`/app/bookmarks/${id}`)
 }
+
+export async function generateDailyBrief() {
+  await apiFetch("/briefs/generate", { method: "POST" })
+  revalidatePath("/app/briefs")
+}

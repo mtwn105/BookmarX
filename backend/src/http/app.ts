@@ -4,8 +4,10 @@ import { logger } from "hono/logger"
 
 import { env } from "../config/env"
 import { aiRoutes } from "./routes/ai"
+import { analyticsRoutes } from "./routes/analytics"
 import { authRoutes } from "./routes/auth"
 import { bookmarkRoutes } from "./routes/bookmarks"
+import { briefRoutes } from "./routes/briefs"
 import { folderRoutes } from "./routes/folders"
 import { searchRoutes } from "./routes/search"
 import { syncRoutes } from "./routes/sync"
@@ -31,8 +33,10 @@ app.get("/health", (c) => {
 })
 
 app.route("/", aiRoutes)
+app.route("/", analyticsRoutes)
 app.route("/", authRoutes)
 app.route("/", bookmarkRoutes)
+app.route("/", briefRoutes)
 app.route("/", folderRoutes)
 app.route("/", searchRoutes)
 app.route("/", syncRoutes)

@@ -82,6 +82,26 @@ export type AiAnswer = {
   }>
 }
 
+export type Brief = {
+  id: string
+  title: string
+  content: string
+  generatedFor: string
+  createdAt: string
+}
+
+export type AnalyticsOverview = {
+  bookmarks: number
+  archived: number
+  briefs: number
+  syncJobs: number
+  topAuthors: Array<{
+    username: string
+    displayName: string | null
+    total: number
+  }>
+}
+
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
 
 export async function getMe(): Promise<User | null> {
@@ -124,6 +144,24 @@ export async function askBookmarks(question: string): Promise<AiAnswer> {
     method: "POST",
     body: JSON.stringify({ question }),
   })
+}
+
+export async function getBriefs(): Promise<Brief[]> {
+  const response = await apiFetch<{ briefs: Brief[] }>("/briefs")
+
+  return response.briefs
+}
+
+export async function generateBrief(): Promise<Brief> {
+  const response = await apiFetch<{ brief: Brief }>("/briefs/generate", { method: "POST" })
+
+  return response.brief
+}
+
+export async function getAnalyticsOverview(): Promise<AnalyticsOverview> {
+  const response = await apiFetch<{ overview: AnalyticsOverview }>("/analytics/overview")
+
+  return response.overview
 }
 
 export async function apiFetch<T>(
