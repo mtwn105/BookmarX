@@ -2,7 +2,7 @@ import { Worker } from "bullmq"
 
 import { env } from "./config/env"
 import { runEmbedBookmarkJob } from "./jobs/embed-bookmark"
-import { cleanupOldJobs, enqueueScheduledSyncs } from "./jobs/scheduled-sync"
+import { cleanupOldJobs, enqueueScheduledSyncs, generateScheduledBriefs } from "./jobs/scheduled-sync"
 import { syncBookmarks } from "./jobs/sync-bookmarks"
 import type { AiJobData } from "./queues/ai"
 import { redisConnection } from "./queues/connection"
@@ -17,10 +17,16 @@ const scheduler = setInterval(() => {
   void cleanupOldJobs().catch((error) => {
     console.error("Job cleanup failed", error)
   })
+  void generateScheduledBriefs().catch((error) => {
+    console.error("Scheduled brief generation failed", error)
+  })
 }, 60 * 60 * 1000)
 
 void enqueueScheduledSyncs().catch((error) => {
   console.error("Initial scheduled sync scan failed", error)
+})
+void generateScheduledBriefs().catch((error) => {
+  console.error("Initial scheduled brief generation failed", error)
 })
 
 const syncWorker = new Worker<SyncBookmarksJobData>(

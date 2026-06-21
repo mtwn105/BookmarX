@@ -1,7 +1,8 @@
-import { and, desc, eq, lt, or, sql } from "drizzle-orm"
+import { and, desc, eq, gte, lt, or, sql } from "drizzle-orm"
 
+import { generateDailyBriefForUser } from "../briefs/service"
 import { db } from "../db/client"
-import { settings, syncJobs, xAccounts } from "../db/schema"
+import { briefs, settings, syncJobs, xAccounts } from "../db/schema"
 import { syncQueue } from "../queues/sync"
 
 const syncIntervalMs = 24 * 60 * 60 * 1000
@@ -48,4 +49,29 @@ export async function cleanupOldJobs() {
   await db
     .delete(syncJobs)
     .where(and(lt(syncJobs.createdAt, cutoff), sql`${syncJobs.status} in ('completed', 'failed', 'cancelled')`))
+}
+
+export async function generateScheduledBriefs() {
+  const startOfDay = new Date()
+
+  startOfDay.setHours(0, 0, 0, 0)
+
+  const enabledUsers = await db
+    .select({ userId: settings.userId })
+    .from(settings)
+    .where(eq(settings.dailyBriefEnabled, true))
+
+  for (const { userId } of enabledUsers) {
+    const [existingBrief] = await db
+      .select({ id: briefs.id })
+      .from(briefs)
+      .where(and(eq(briefs.userId, userId), gte(briefs.generatedFor, startOfDay)))
+      .limit(1)
+
+    if (existingBrief) {
+      continue
+    }
+
+    await generateDailyBriefForUser(userId)
+  }
 }
