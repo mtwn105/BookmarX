@@ -6,20 +6,17 @@ import { env } from "../../config/env"
 import { db } from "../../db/client"
 import { oauthTokens, users, xAccounts } from "../../db/schema"
 import { createSession, deleteSession, getSessionUser } from "../../auth/session"
+import { sessionCookie, xStateCookie, xVerifierCookie } from "../../auth/cookies"
 import { createAuthorizationUrl, exchangeCodeForToken, fetchXMe } from "../../auth/x-oauth"
 import { encryptSecret } from "../../lib/crypto"
-
-const sessionCookie = "bookmarx_session"
-const stateCookie = "bookmarx_x_state"
-const verifierCookie = "bookmarx_x_verifier"
 
 export const authRoutes = new Hono()
 
 authRoutes.get("/auth/x/start", async (c) => {
   const { url, state, codeVerifier } = await createAuthorizationUrl()
 
-  setCookie(c, stateCookie, state, oauthCookieOptions())
-  setCookie(c, verifierCookie, codeVerifier, oauthCookieOptions())
+  setCookie(c, xStateCookie, state, oauthCookieOptions())
+  setCookie(c, xVerifierCookie, codeVerifier, oauthCookieOptions())
 
   return c.redirect(url)
 })
@@ -27,11 +24,11 @@ authRoutes.get("/auth/x/start", async (c) => {
 authRoutes.get("/auth/x/callback", async (c) => {
   const code = c.req.query("code")
   const state = c.req.query("state")
-  const expectedState = getCookie(c, stateCookie)
-  const codeVerifier = getCookie(c, verifierCookie)
+  const expectedState = getCookie(c, xStateCookie)
+  const codeVerifier = getCookie(c, xVerifierCookie)
 
-  deleteCookie(c, stateCookie, cookieBaseOptions())
-  deleteCookie(c, verifierCookie, cookieBaseOptions())
+  deleteCookie(c, xStateCookie, cookieBaseOptions())
+  deleteCookie(c, xVerifierCookie, cookieBaseOptions())
 
   if (!code || !state || !expectedState || !codeVerifier || state !== expectedState) {
     return c.json({ error: "Invalid X OAuth callback" }, 400)

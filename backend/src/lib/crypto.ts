@@ -1,4 +1,4 @@
-import { createCipheriv, createHash, randomBytes } from "node:crypto"
+import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto"
 
 import { env } from "../config/env"
 
@@ -11,6 +11,15 @@ export function encryptSecret(value: string): string {
   const tag = cipher.getAuthTag()
 
   return [iv, tag, encrypted].map((part) => part.toString("base64url")).join(".")
+}
+
+export function decryptSecret(value: string): string {
+  const [iv, tag, encrypted] = value.split(".").map((part) => Buffer.from(part, "base64url"))
+  const decipher = createDecipheriv("aes-256-gcm", key, iv)
+
+  decipher.setAuthTag(tag)
+
+  return Buffer.concat([decipher.update(encrypted), decipher.final()]).toString("utf8")
 }
 
 export function sha256(value: string): string {
