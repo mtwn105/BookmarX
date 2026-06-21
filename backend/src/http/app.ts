@@ -3,9 +3,11 @@ import { cors } from "hono/cors"
 import { logger } from "hono/logger"
 
 import { env } from "../config/env"
+import { aiRoutes } from "./routes/ai"
 import { authRoutes } from "./routes/auth"
 import { bookmarkRoutes } from "./routes/bookmarks"
 import { folderRoutes } from "./routes/folders"
+import { searchRoutes } from "./routes/search"
 import { syncRoutes } from "./routes/sync"
 import { tagRoutes } from "./routes/tags"
 
@@ -28,9 +30,11 @@ app.get("/health", (c) => {
   })
 })
 
+app.route("/", aiRoutes)
 app.route("/", authRoutes)
 app.route("/", bookmarkRoutes)
 app.route("/", folderRoutes)
+app.route("/", searchRoutes)
 app.route("/", syncRoutes)
 app.route("/", tagRoutes)
 

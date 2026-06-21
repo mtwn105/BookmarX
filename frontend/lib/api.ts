@@ -68,6 +68,20 @@ export type SyncJob = {
   finishedAt: string | null
 }
 
+export type AiAnswer = {
+  answer: string
+  sources: Array<{
+    bookmarkId: string
+    postId: string
+    postText: string
+    authorUsername: string | null
+    authorDisplayName: string | null
+    chunk: string
+    similarity: number
+    xPostId: string
+  }>
+}
+
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
 
 export async function getMe(): Promise<User | null> {
@@ -103,6 +117,13 @@ export async function getSyncJobs(): Promise<SyncJob[]> {
   const response = await apiFetch<{ jobs: SyncJob[] }>("/sync/jobs")
 
   return response.jobs
+}
+
+export async function askBookmarks(question: string): Promise<AiAnswer> {
+  return apiFetch<AiAnswer>("/ai/chat", {
+    method: "POST",
+    body: JSON.stringify({ question }),
+  })
 }
 
 export async function apiFetch<T>(

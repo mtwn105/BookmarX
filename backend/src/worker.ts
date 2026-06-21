@@ -1,7 +1,9 @@
 import { Worker } from "bullmq"
 
 import { env } from "./config/env"
+import { runEmbedBookmarkJob } from "./jobs/embed-bookmark"
 import { syncBookmarks } from "./jobs/sync-bookmarks"
+import type { AiJobData } from "./queues/ai"
 import { redisConnection } from "./queues/connection"
 import type { SyncBookmarksJobData } from "./queues/sync"
 
@@ -19,8 +21,24 @@ const syncWorker = new Worker<SyncBookmarksJobData>(
   { connection: redisConnection },
 )
 
+const aiWorker = new Worker<AiJobData>(
+  "ai",
+  async (job) => {
+    if (job.name !== "bookmark.embed") {
+      throw new Error(`Unknown AI job: ${job.name}`)
+    }
+
+    await runEmbedBookmarkJob(job.data)
+  },
+  { connection: redisConnection },
+)
+
 syncWorker.on("failed", (job, error) => {
   console.error(`Sync job ${job?.id ?? "unknown"} failed`, error)
+})
+
+aiWorker.on("failed", (job, error) => {
+  console.error(`AI job ${job?.id ?? "unknown"} failed`, error)
 })
 
 process.on("SIGINT", () => {
@@ -34,5 +52,6 @@ process.on("SIGTERM", () => {
 async function shutdown() {
   console.log("BookmarX worker stopping")
   await syncWorker.close()
+  await aiWorker.close()
   process.exit(0)
 }

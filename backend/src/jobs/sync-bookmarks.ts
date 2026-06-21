@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm"
 import { db } from "../db/client"
 import { bookmarks, oauthTokens, postAuthors, postUrls, posts, syncJobs, xAccounts } from "../db/schema"
 import { decryptSecret } from "../lib/crypto"
+import { aiQueue } from "../queues/ai"
 import { fetchBookmarksPage, type XBookmarkPost, type XBookmarkUser } from "../x/bookmarks"
 
 const ownedReadEstimatedCostMicros = 1_000
@@ -26,7 +27,13 @@ export async function syncBookmarks(input: { syncJobId: string; userId: string }
       const pagePosts = page.data ?? []
 
       for (const post of pagePosts) {
-        await upsertBookmarkPost({ userId: input.userId, post, author: post.author_id ? authorsByXId.get(post.author_id) : undefined })
+        const bookmarkId = await upsertBookmarkPost({
+          userId: input.userId,
+          post,
+          author: post.author_id ? authorsByXId.get(post.author_id) : undefined,
+        })
+
+        await aiQueue.add("bookmark.embed", { bookmarkId })
       }
 
       resourcesFetched += pagePosts.length
@@ -83,7 +90,7 @@ async function getXAuthForUser(userId: string) {
   }
 }
 
-async function upsertBookmarkPost(input: { userId: string; post: XBookmarkPost; author?: XBookmarkUser }) {
+async function upsertBookmarkPost(input: { userId: string; post: XBookmarkPost; author?: XBookmarkUser }): Promise<string> {
   const authorId = input.author ? await upsertAuthor(input.author) : null
   const metrics = input.post.public_metrics
   const [post] = await db
@@ -123,7 +130,7 @@ async function upsertBookmarkPost(input: { userId: string; post: XBookmarkPost; 
     })
     .returning({ id: posts.id })
 
-  await db
+  const [bookmark] = await db
     .insert(bookmarks)
     .values({
       userId: input.userId,
@@ -137,6 +144,7 @@ async function upsertBookmarkPost(input: { userId: string; post: XBookmarkPost; 
         updatedAt: new Date(),
       },
     })
+    .returning({ id: bookmarks.id })
 
   const urls = input.post.entities?.urls ?? []
 
@@ -152,6 +160,8 @@ async function upsertBookmarkPost(input: { userId: string; post: XBookmarkPost; 
       description: url.description,
     })
   }
+
+  return bookmark.id
 }
 
 async function upsertAuthor(author: XBookmarkUser): Promise<string> {
