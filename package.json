@@ -1,0 +1,16 @@
+{
+  "name": "bookmarx",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev:backend": "bun --cwd backend dev",
+    "dev:frontend": "bun --cwd frontend dev",
+    "typecheck": "bun --cwd backend typecheck && bun --cwd frontend typecheck",
+    "lint": "bun --cwd backend lint && bun --cwd frontend lint"
+  }
+}
