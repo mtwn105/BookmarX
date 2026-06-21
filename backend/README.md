@@ -8,6 +8,7 @@ Hono API and worker service for BookmarX.
 bun install
 bun run dev
 bun run worker
+bun run db:migrate
 bun run typecheck
 ```
 
