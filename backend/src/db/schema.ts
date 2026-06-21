@@ -69,6 +69,23 @@ export const oauthTokens = pgTable(
   (table) => [uniqueIndex("oauth_tokens_x_account_id_unique_idx").on(table.xAccountId)],
 )
 
+export const sessions = pgTable(
+  "sessions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    tokenHash: text("token_hash").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("sessions_token_hash_unique_idx").on(table.tokenHash),
+    index("sessions_user_id_idx").on(table.userId),
+  ],
+)
+
 export const postAuthors = pgTable(
   "post_authors",
   {

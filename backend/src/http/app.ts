@@ -3,6 +3,7 @@ import { cors } from "hono/cors"
 import { logger } from "hono/logger"
 
 import { env } from "../config/env"
+import { authRoutes } from "./routes/auth"
 
 export const app = new Hono()
 
@@ -22,6 +23,8 @@ app.get("/health", (c) => {
     environment: env.NODE_ENV,
   })
 })
+
+app.route("/", authRoutes)
 
 app.notFound((c) => c.json({ error: "Not found" }, 404))
 
