@@ -1,13 +1,13 @@
 import { notFound } from "next/navigation"
 
 import { Button, buttonVariants } from "@/components/ui/button"
-import { getBookmark, xPostUrl } from "@/lib/api"
+import { getBookmark, getFolders, getTags, xPostUrl } from "@/lib/api"
 
-import { archiveBookmark, suggestBookmarkTags, summarizeBookmark, updateBookmarkNote } from "../../actions"
+import { addBookmarkFolder, addBookmarkTag, archiveBookmark, suggestBookmarkTags, summarizeBookmark, updateBookmarkNote } from "../../actions"
 
 export default async function BookmarkDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const row = await getBookmark(id)
+  const [row, folders, tags] = await Promise.all([getBookmark(id), getFolders(), getTags()])
 
   if (!row) {
     notFound()
@@ -74,6 +74,42 @@ export default async function BookmarkDetailPage({ params }: { params: Promise<{
           <Button className="rounded-full" type="submit">
             Save note
           </Button>
+        </form>
+      </section>
+      <section className="grid gap-4 md:grid-cols-2">
+        <form action={addBookmarkFolder} className="rounded-[2rem] border border-white/15 bg-background/80 p-5 shadow-xl shadow-black/5 backdrop-blur-xl md:p-6">
+          <input name="bookmarkId" type="hidden" value={row.bookmark.id} />
+          <h2 className="text-xl font-semibold tracking-[-0.03em]">Add to folder</h2>
+          <div className="mt-4 flex gap-3">
+            <select className="h-11 min-w-0 flex-1 rounded-full border border-border bg-background px-4" name="folderId">
+              <option value="">Choose folder</option>
+              {folders.map((folder) => (
+                <option key={folder.id} value={folder.id}>
+                  {folder.name}
+                </option>
+              ))}
+            </select>
+            <Button className="rounded-full" type="submit" variant="secondary">
+              Add
+            </Button>
+          </div>
+        </form>
+        <form action={addBookmarkTag} className="rounded-[2rem] border border-white/15 bg-background/80 p-5 shadow-xl shadow-black/5 backdrop-blur-xl md:p-6">
+          <input name="bookmarkId" type="hidden" value={row.bookmark.id} />
+          <h2 className="text-xl font-semibold tracking-[-0.03em]">Add tag</h2>
+          <div className="mt-4 flex gap-3">
+            <select className="h-11 min-w-0 flex-1 rounded-full border border-border bg-background px-4" name="tagId">
+              <option value="">Choose tag</option>
+              {tags.map((tag) => (
+                <option key={tag.id} value={tag.id}>
+                  {tag.name}
+                </option>
+              ))}
+            </select>
+            <Button className="rounded-full" type="submit" variant="secondary">
+              Add
+            </Button>
+          </div>
         </form>
       </section>
     </div>

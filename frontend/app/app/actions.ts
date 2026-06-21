@@ -85,3 +85,27 @@ export async function suggestBookmarkTags(formData: FormData) {
   revalidatePath(`/app/bookmarks/${id}`)
   revalidatePath("/app/tags")
 }
+
+export async function addBookmarkFolder(formData: FormData) {
+  const bookmarkId = String(formData.get("bookmarkId") ?? "")
+  const folderId = String(formData.get("folderId") ?? "")
+
+  if (!folderId) {
+    return
+  }
+
+  await apiFetch(`/bookmarks/${bookmarkId}/folders/${folderId}`, { method: "POST" })
+  revalidatePath(`/app/bookmarks/${bookmarkId}`)
+}
+
+export async function addBookmarkTag(formData: FormData) {
+  const bookmarkId = String(formData.get("bookmarkId") ?? "")
+  const tagId = String(formData.get("tagId") ?? "")
+
+  if (!tagId) {
+    return
+  }
+
+  await apiFetch(`/bookmarks/${bookmarkId}/tags/${tagId}`, { method: "POST" })
+  revalidatePath(`/app/bookmarks/${bookmarkId}`)
+}
