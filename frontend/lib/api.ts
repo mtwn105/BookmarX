@@ -102,6 +102,15 @@ export type AnalyticsOverview = {
   }>
 }
 
+export type UserSettings = {
+  id: string
+  aiProvider: string
+  embeddingModel: string
+  chatModel: string
+  scheduledSyncEnabled: boolean
+  dailyBriefEnabled: boolean
+}
+
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
 
 export async function getMe(): Promise<User | null> {
@@ -162,6 +171,12 @@ export async function getAnalyticsOverview(): Promise<AnalyticsOverview> {
   const response = await apiFetch<{ overview: AnalyticsOverview }>("/analytics/overview")
 
   return response.overview
+}
+
+export async function getSettings(): Promise<UserSettings> {
+  const response = await apiFetch<{ settings: UserSettings }>("/settings")
+
+  return response.settings
 }
 
 export async function apiFetch<T>(

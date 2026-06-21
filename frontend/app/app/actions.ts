@@ -57,3 +57,31 @@ export async function generateDailyBrief() {
   await apiFetch("/briefs/generate", { method: "POST" })
   revalidatePath("/app/briefs")
 }
+
+export async function updateSettings(formData: FormData) {
+  await apiFetch("/settings", {
+    method: "PATCH",
+    body: JSON.stringify({
+      scheduledSyncEnabled: formData.get("scheduledSyncEnabled") === "on",
+      dailyBriefEnabled: formData.get("dailyBriefEnabled") === "on",
+      embeddingModel: String(formData.get("embeddingModel") ?? ""),
+      chatModel: String(formData.get("chatModel") ?? ""),
+    }),
+  })
+  revalidatePath("/app/settings")
+}
+
+export async function summarizeBookmark(formData: FormData) {
+  const id = String(formData.get("id") ?? "")
+
+  await apiFetch(`/ai/summarize/${id}`, { method: "POST" })
+  revalidatePath(`/app/bookmarks/${id}`)
+}
+
+export async function suggestBookmarkTags(formData: FormData) {
+  const id = String(formData.get("id") ?? "")
+
+  await apiFetch(`/ai/suggest-tags/${id}`, { method: "POST" })
+  revalidatePath(`/app/bookmarks/${id}`)
+  revalidatePath("/app/tags")
+}

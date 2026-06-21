@@ -10,12 +10,13 @@ const navItems = [
   ["Briefs", "/app/briefs"],
   ["Folders", "/app/folders"],
   ["Tags", "/app/tags"],
+  ["Settings", "/app/settings"],
 ]
 
 export function AppNav() {
   return (
     <nav className="fixed inset-x-3 bottom-3 z-50 rounded-full border border-white/15 bg-background/85 p-1 shadow-2xl shadow-black/10 backdrop-blur-xl md:sticky md:top-6 md:bottom-auto md:rounded-[2rem] md:bg-card/70 md:p-3">
-      <div className="grid grid-cols-6 gap-1 md:grid-cols-1">
+      <div className="grid grid-cols-7 gap-1 md:grid-cols-1">
         {navItems.map(([label, href]) => (
           <Link
             className={cn(

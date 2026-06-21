@@ -10,6 +10,7 @@ import { bookmarkRoutes } from "./routes/bookmarks"
 import { briefRoutes } from "./routes/briefs"
 import { folderRoutes } from "./routes/folders"
 import { searchRoutes } from "./routes/search"
+import { settingsRoutes } from "./routes/settings"
 import { setupRoutes } from "./routes/setup"
 import { syncRoutes } from "./routes/sync"
 import { tagRoutes } from "./routes/tags"
@@ -40,6 +41,7 @@ app.route("/", bookmarkRoutes)
 app.route("/", briefRoutes)
 app.route("/", folderRoutes)
 app.route("/", searchRoutes)
+app.route("/", settingsRoutes)
 app.route("/", setupRoutes)
 app.route("/", syncRoutes)
 app.route("/", tagRoutes)

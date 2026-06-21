@@ -2,12 +2,26 @@ import { Worker } from "bullmq"
 
 import { env } from "./config/env"
 import { runEmbedBookmarkJob } from "./jobs/embed-bookmark"
+import { cleanupOldJobs, enqueueScheduledSyncs } from "./jobs/scheduled-sync"
 import { syncBookmarks } from "./jobs/sync-bookmarks"
 import type { AiJobData } from "./queues/ai"
 import { redisConnection } from "./queues/connection"
 import type { SyncBookmarksJobData } from "./queues/sync"
 
 console.log(`BookmarX worker started in ${env.NODE_ENV} mode`)
+
+const scheduler = setInterval(() => {
+  void enqueueScheduledSyncs().catch((error) => {
+    console.error("Scheduled sync scan failed", error)
+  })
+  void cleanupOldJobs().catch((error) => {
+    console.error("Job cleanup failed", error)
+  })
+}, 60 * 60 * 1000)
+
+void enqueueScheduledSyncs().catch((error) => {
+  console.error("Initial scheduled sync scan failed", error)
+})
 
 const syncWorker = new Worker<SyncBookmarksJobData>(
   "sync",
@@ -41,6 +55,8 @@ aiWorker.on("failed", (job, error) => {
   console.error(`AI job ${job?.id ?? "unknown"} failed`, error)
 })
 
+let isShuttingDown = false
+
 process.on("SIGINT", () => {
   void shutdown()
 })
@@ -50,7 +66,13 @@ process.on("SIGTERM", () => {
 })
 
 async function shutdown() {
+  if (isShuttingDown) {
+    return
+  }
+
+  isShuttingDown = true
   console.log("BookmarX worker stopping")
+  clearInterval(scheduler)
   await syncWorker.close()
   await aiWorker.close()
   process.exit(0)

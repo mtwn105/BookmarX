@@ -3,7 +3,7 @@ import { notFound } from "next/navigation"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { getBookmark, xPostUrl } from "@/lib/api"
 
-import { archiveBookmark, updateBookmarkNote } from "../../actions"
+import { archiveBookmark, suggestBookmarkTags, summarizeBookmark, updateBookmarkNote } from "../../actions"
 
 export default async function BookmarkDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -41,8 +41,26 @@ export default async function BookmarkDetailPage({ params }: { params: Promise<{
               Archive
             </Button>
           </form>
+          <form action={summarizeBookmark}>
+            <input name="id" type="hidden" value={row.bookmark.id} />
+            <Button className="rounded-full" type="submit" variant="outline">
+              Summarize
+            </Button>
+          </form>
+          <form action={suggestBookmarkTags}>
+            <input name="id" type="hidden" value={row.bookmark.id} />
+            <Button className="rounded-full" type="submit" variant="outline">
+              Suggest tags
+            </Button>
+          </form>
         </div>
       </section>
+      {row.bookmark.aiSummary ? (
+        <section className="rounded-[2rem] border border-white/15 bg-background/80 p-5 shadow-xl shadow-black/5 backdrop-blur-xl md:p-6">
+          <h2 className="text-xl font-semibold tracking-[-0.03em]">AI summary</h2>
+          <p className="mt-3 leading-7 text-muted-foreground">{row.bookmark.aiSummary}</p>
+        </section>
+      ) : null}
       <section className="rounded-[2rem] border border-white/15 bg-background/80 p-5 shadow-xl shadow-black/5 backdrop-blur-xl md:p-6">
         <h2 className="text-xl font-semibold tracking-[-0.03em]">Private note</h2>
         <form action={updateBookmarkNote} className="mt-4 space-y-4">

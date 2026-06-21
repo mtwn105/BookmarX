@@ -1,8 +1,11 @@
 import { generateText } from "ai"
+import { and, eq } from "drizzle-orm"
 import { Hono } from "hono"
 
 import { findRelevantBookmarks } from "../../ai/embeddings"
 import { chatModel } from "../../ai/models"
+import { db } from "../../db/client"
+import { bookmarkTags, bookmarks, postAuthors, posts, tags } from "../../db/schema"
 import { requireUser } from "../require-user"
 
 export const aiRoutes = new Hono()
@@ -50,9 +53,101 @@ aiRoutes.post("/ai/chat", async (c) => {
 })
 
 aiRoutes.post("/ai/summarize/:bookmarkId", async (c) => {
-  return c.json({ error: `Summaries for ${c.req.param("bookmarkId")} are not implemented yet` }, 501)
+  const user = await requireUser(c)
+
+  if (!user) {
+    return c.json({ error: "Unauthorized" }, 401)
+  }
+
+  const row = await getUserBookmark(c.req.param("bookmarkId"), user.id)
+
+  if (!row) {
+    return c.json({ error: "Bookmark not found" }, 404)
+  }
+
+  const result = await generateText({
+    model: chatModel,
+    system: "Summarize a saved X bookmark in one concise sentence. Do not invent details outside the provided post.",
+    prompt: `Author: ${row.author ? `@${row.author.username}` : "unknown"}\nPost: ${row.post.text}`,
+  })
+  const [bookmark] = await db
+    .update(bookmarks)
+    .set({ aiSummary: result.text.trim(), updatedAt: new Date() })
+    .where(and(eq(bookmarks.id, row.bookmark.id), eq(bookmarks.userId, user.id)))
+    .returning()
+
+  return c.json({ bookmark })
 })
 
 aiRoutes.post("/ai/suggest-tags/:bookmarkId", async (c) => {
-  return c.json({ error: `Tag suggestions for ${c.req.param("bookmarkId")} are not implemented yet` }, 501)
+  const user = await requireUser(c)
+
+  if (!user) {
+    return c.json({ error: "Unauthorized" }, 401)
+  }
+
+  const row = await getUserBookmark(c.req.param("bookmarkId"), user.id)
+
+  if (!row) {
+    return c.json({ error: "Bookmark not found" }, 404)
+  }
+
+  const result = await generateText({
+    model: chatModel,
+    system:
+      "Suggest 3 to 5 short lowercase tags for a saved X bookmark. Return only a JSON array of strings. No markdown.",
+    prompt: `Post: ${row.post.text}`,
+  })
+  const names = parseTagNames(result.text)
+  const createdTags = []
+
+  for (const name of names) {
+    const [tag] = await db
+      .insert(tags)
+      .values({ userId: user.id, name })
+      .onConflictDoUpdate({
+        target: [tags.userId, tags.name],
+        set: { updatedAt: new Date() },
+      })
+      .returning()
+
+    await db
+      .insert(bookmarkTags)
+      .values({ bookmarkId: row.bookmark.id, tagId: tag.id })
+      .onConflictDoNothing({ target: [bookmarkTags.bookmarkId, bookmarkTags.tagId] })
+
+    createdTags.push(tag)
+  }
+
+  return c.json({ tags: createdTags })
 })
+
+async function getUserBookmark(bookmarkId: string, userId: string) {
+  const [row] = await db
+    .select({ bookmark: bookmarks, post: posts, author: postAuthors })
+    .from(bookmarks)
+    .innerJoin(posts, eq(bookmarks.postId, posts.id))
+    .leftJoin(postAuthors, eq(posts.authorId, postAuthors.id))
+    .where(and(eq(bookmarks.id, bookmarkId), eq(bookmarks.userId, userId)))
+    .limit(1)
+
+  return row
+}
+
+function parseTagNames(value: string): string[] {
+  try {
+    const parsed = JSON.parse(value) as unknown
+
+    if (Array.isArray(parsed)) {
+      return normalizeTags(parsed)
+    }
+  } catch {
+    return normalizeTags(value.split(/[\n,]/))
+  }
+
+  return []
+}
+
+function normalizeTags(values: unknown[]): string[] {
+  return [...new Set(values.map((value) => String(value).trim().toLowerCase().replace(/^#/, "")).filter(Boolean))].slice(0, 5)
+}
