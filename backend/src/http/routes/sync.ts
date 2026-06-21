@@ -1,12 +1,10 @@
 import { and, desc, eq } from "drizzle-orm"
-import { Hono, type Context } from "hono"
-import { getCookie } from "hono/cookie"
+import { Hono } from "hono"
 
-import { getSessionUser } from "../../auth/session"
-import { sessionCookie } from "../../auth/cookies"
 import { db } from "../../db/client"
 import { syncJobs } from "../../db/schema"
 import { syncQueue } from "../../queues/sync"
+import { requireUser } from "../require-user"
 
 export const syncRoutes = new Hono()
 
@@ -63,13 +61,3 @@ syncRoutes.get("/sync/jobs/:id", async (c) => {
 
   return c.json({ job })
 })
-
-async function requireUser(c: Context) {
-  const token = getCookie(c, sessionCookie)
-
-  if (!token) {
-    return null
-  }
-
-  return getSessionUser(token)
-}

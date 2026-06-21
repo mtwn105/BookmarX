@@ -4,7 +4,10 @@ import { logger } from "hono/logger"
 
 import { env } from "../config/env"
 import { authRoutes } from "./routes/auth"
+import { bookmarkRoutes } from "./routes/bookmarks"
+import { folderRoutes } from "./routes/folders"
 import { syncRoutes } from "./routes/sync"
+import { tagRoutes } from "./routes/tags"
 
 export const app = new Hono()
 
@@ -26,7 +29,10 @@ app.get("/health", (c) => {
 })
 
 app.route("/", authRoutes)
+app.route("/", bookmarkRoutes)
+app.route("/", folderRoutes)
 app.route("/", syncRoutes)
+app.route("/", tagRoutes)
 
 app.notFound((c) => c.json({ error: "Not found" }, 404))
 
