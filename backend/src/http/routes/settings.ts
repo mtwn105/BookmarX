@@ -30,16 +30,12 @@ settingsRoutes.patch("/settings", async (c) => {
   const body = (await c.req.json()) as {
     scheduledSyncEnabled?: boolean
     dailyBriefEnabled?: boolean
-    embeddingModel?: string
-    chatModel?: string
   }
   const [updated] = await db
     .update(settings)
     .set({
       scheduledSyncEnabled: body.scheduledSyncEnabled,
       dailyBriefEnabled: body.dailyBriefEnabled,
-      embeddingModel: body.embeddingModel?.trim() || undefined,
-      chatModel: body.chatModel?.trim() || undefined,
       updatedAt: new Date(),
     })
     .where(eq(settings.userId, user.id))

@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation"
 
-import { AppNav } from "@/components/app-nav"
-import { getMe } from "@/lib/api"
+import { AppSidebar } from "@/components/app-sidebar"
+import { Separator } from "@/components/ui/separator"
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import { getFolders, getMe } from "@/lib/api"
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await getMe()
@@ -9,22 +11,28 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!user) {
     redirect("/")
   }
+  const folders = await getFolders()
 
   return (
-    <div className="min-h-svh bg-[linear-gradient(135deg,oklch(0.98_0.02_90),oklch(0.95_0.02_250))] pb-24 dark:bg-[linear-gradient(135deg,oklch(0.16_0.02_250),oklch(0.1_0.01_260))] md:pb-0">
-      <div className="mx-auto grid w-full max-w-7xl gap-6 px-4 py-5 md:grid-cols-[13rem_1fr] md:px-6 md:py-6">
-        <aside className="hidden md:block">
-          <div className="mb-4 rounded-[2rem] border border-white/15 bg-card/70 p-4 shadow-xl shadow-black/5 backdrop-blur-xl">
-            <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">BookmarX</p>
-            <p className="mt-2 truncate text-sm font-medium">{user.name ?? "X account"}</p>
-          </div>
-          <AppNav />
-        </aside>
-        <main className="min-w-0">{children}</main>
-      </div>
-      <div className="md:hidden">
-        <AppNav />
-      </div>
+    <SidebarProvider>
+      <AppSidebar folders={folders} user={user} />
+      <SidebarInset>
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b bg-background/90 px-4 backdrop-blur-xl">
+          <SidebarTrigger />
+          <Separator className="h-4" orientation="vertical" />
+          <LinkBrand />
+        </header>
+        <div className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6 lg:py-8">{children}</div>
+      </SidebarInset>
+    </SidebarProvider>
+  )
+}
+
+function LinkBrand() {
+  return (
+    <div className="flex items-center gap-2 text-sm">
+      <span className="font-medium">BookmarX</span>
+      <span className="hidden text-muted-foreground sm:inline">Your X knowledge library</span>
     </div>
   )
 }

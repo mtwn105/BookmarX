@@ -85,6 +85,30 @@ export async function exchangeCodeForToken(code: string, codeVerifier: string): 
   return response.json() as Promise<XTokenResponse>
 }
 
+export async function refreshAccessToken(refreshToken: string): Promise<XTokenResponse> {
+  const config = getXOAuthConfig()
+  const body = new URLSearchParams({
+    grant_type: "refresh_token",
+    refresh_token: refreshToken,
+    client_id: config.X_CLIENT_ID,
+  })
+  const response = await fetch(tokenEndpoint, {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${Buffer.from(`${config.X_CLIENT_ID}:${config.X_CLIENT_SECRET}`).toString("base64")}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body,
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.text()
+    throw new Error(`X token refresh failed with status ${response.status}: ${errorBody.slice(0, 300)}`)
+  }
+
+  return response.json() as Promise<XTokenResponse>
+}
+
 export async function fetchXMe(accessToken: string): Promise<XUserResponse> {
   const response = await fetch(meEndpoint, {
     headers: {

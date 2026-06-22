@@ -1,8 +1,12 @@
+import { createOpenAI } from "@ai-sdk/openai"
+
 import { env } from "../config/env"
 
-if (env.AI_API_KEY && !process.env.AI_GATEWAY_API_KEY) {
-  process.env.AI_GATEWAY_API_KEY = env.AI_API_KEY
-}
+export const openai = createOpenAI({
+  apiKey: env.AI_API_KEY,
+})
 
-export const embeddingModel = env.EMBEDDING_MODEL
-export const chatModel = env.CHAT_MODEL
+export const embeddingModel = openai.embedding(env.EMBEDDING_MODEL.replace("openai/", ""))
+export const chatModel = openai(env.CHAT_MODEL.replace("openai/", ""))
+export const embeddingModelId = env.EMBEDDING_MODEL
+export const chatModelId = env.CHAT_MODEL

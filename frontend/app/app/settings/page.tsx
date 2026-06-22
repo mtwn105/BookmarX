@@ -1,57 +1,121 @@
-import { Button } from "@/components/ui/button"
-import { getSettings } from "@/lib/api"
+import { RefreshIcon } from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
 
-import { updateSettings } from "../actions"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
+import { Switch } from "@/components/ui/switch"
+import { getMe, getSettings, getSyncJobs } from "@/lib/api"
+
+import { logout, updateSettings } from "../actions"
 
 export default async function SettingsPage() {
-  const settings = await getSettings()
+  const [user, settings, syncJobs] = await Promise.all([getMe(), getSettings(), getSyncJobs()])
+  const latestSync = syncJobs[0]
 
   return (
-    <div className="space-y-6">
-      <section className="rounded-[2.25rem] border border-white/15 bg-background/80 p-5 shadow-2xl shadow-black/5 backdrop-blur-xl md:p-8">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Settings</p>
-        <h1 className="mt-3 text-4xl font-semibold tracking-[-0.06em] md:text-6xl">Tune your instance.</h1>
-        <p className="mt-3 max-w-2xl text-muted-foreground">
-          Control scheduled sync, daily brief preference, and the AI models used by this self-hosted deployment.
-        </p>
-      </section>
-      <form action={updateSettings} className="rounded-[2rem] border border-white/15 bg-background/80 p-5 shadow-xl shadow-black/5 backdrop-blur-xl md:p-6">
-        <div className="grid gap-5 md:grid-cols-2">
-          <label className="rounded-3xl border border-border bg-muted/25 p-4">
-            <span className="block text-sm font-medium">Embedding model</span>
-            <input
-              className="mt-3 h-11 w-full rounded-full border border-border bg-background px-4 outline-none ring-ring/20 focus:ring-4"
-              defaultValue={settings.embeddingModel}
-              name="embeddingModel"
+    <div className="max-w-2xl space-y-6">
+      <div>
+        <p className="text-sm font-medium text-primary">Settings</p>
+        <h1 className="mt-1 text-3xl font-semibold tracking-tight">Account and automation</h1>
+        <p className="mt-2 text-muted-foreground">BookmarX manages AI configuration at the deployment level.</p>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Connected X account</CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center gap-3">
+          <Avatar className="size-11">
+            <AvatarImage alt={user?.name ?? "X account"} src={user?.imageUrl ?? undefined} />
+            <AvatarFallback>{user?.name?.slice(0, 1).toUpperCase() ?? "X"}</AvatarFallback>
+          </Avatar>
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-medium">{user?.name ?? "X account"}</p>
+            <p className="truncate text-sm text-muted-foreground">
+              {user?.username ? `@${user.username}` : "Connected through X OAuth"}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <form action={updateSettings}>
+        <Card>
+          <CardHeader>
+            <CardTitle>Automation</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <SettingRow
+              checked={settings.scheduledSyncEnabled}
+              description="Check X daily and enrich new bookmarks automatically."
+              label="Daily bookmark sync"
+              name="scheduledSyncEnabled"
             />
-          </label>
-          <label className="rounded-3xl border border-border bg-muted/25 p-4">
-            <span className="block text-sm font-medium">Chat model</span>
-            <input
-              className="mt-3 h-11 w-full rounded-full border border-border bg-background px-4 outline-none ring-ring/20 focus:ring-4"
-              defaultValue={settings.chatModel}
-              name="chatModel"
+            <Separator />
+            <SettingRow
+              checked={settings.dailyBriefEnabled}
+              description="Generate a daily editorial summary from recent bookmarks."
+              label="Daily intelligent brief"
+              name="dailyBriefEnabled"
             />
-          </label>
-          <label className="flex items-center justify-between gap-4 rounded-3xl border border-border bg-muted/25 p-4">
-            <span>
-              <span className="block text-sm font-medium">Scheduled sync</span>
-              <span className="text-sm text-muted-foreground">Worker checks once per hour and syncs at most daily.</span>
-            </span>
-            <input className="size-5" defaultChecked={settings.scheduledSyncEnabled} name="scheduledSyncEnabled" type="checkbox" />
-          </label>
-          <label className="flex items-center justify-between gap-4 rounded-3xl border border-border bg-muted/25 p-4">
-            <span>
-              <span className="block text-sm font-medium">Daily brief preference</span>
-              <span className="text-sm text-muted-foreground">Stores preference for the scheduled brief phase.</span>
-            </span>
-            <input className="size-5" defaultChecked={settings.dailyBriefEnabled} name="dailyBriefEnabled" type="checkbox" />
-          </label>
-        </div>
-        <Button className="mt-6 rounded-full" type="submit">
-          Save settings
-        </Button>
+            <Button type="submit">Save preferences</Button>
+          </CardContent>
+        </Card>
       </form>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Sync status</CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-start gap-3 text-sm">
+          <HugeiconsIcon className="mt-0.5 text-muted-foreground" icon={RefreshIcon} size={18} />
+          <div>
+            <p className="font-medium capitalize">{latestSync?.status ?? "Not synced yet"}</p>
+            {latestSync ? (
+              <p className="mt-1 text-muted-foreground">
+                {latestSync.resourcesFetched} posts fetched ·{" "}
+                {new Date(latestSync.finishedAt ?? latestSync.createdAt).toLocaleString()}
+              </p>
+            ) : null}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Session</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form action={logout}>
+            <Button type="submit" variant="outline">
+              Log out
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
+  )
+}
+
+function SettingRow({
+  label,
+  description,
+  name,
+  checked,
+}: {
+  label: string
+  description: string
+  name: string
+  checked: boolean
+}) {
+  return (
+    <label className="flex items-center justify-between gap-6">
+      <span>
+        <span className="block font-medium">{label}</span>
+        <span className="mt-1 block text-sm text-muted-foreground">{description}</span>
+      </span>
+      <Switch defaultChecked={checked} name={name} />
+    </label>
   )
 }

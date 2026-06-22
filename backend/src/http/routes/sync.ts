@@ -1,8 +1,8 @@
-import { and, desc, eq } from "drizzle-orm"
+import { and, count, desc, eq, sql } from "drizzle-orm"
 import { Hono } from "hono"
 
 import { db } from "../../db/client"
-import { syncJobs } from "../../db/schema"
+import { bookmarks, syncJobs } from "../../db/schema"
 import { syncQueue } from "../../queues/sync"
 import { requireUser } from "../require-user"
 
@@ -60,4 +60,38 @@ syncRoutes.get("/sync/jobs/:id", async (c) => {
   }
 
   return c.json({ job })
+})
+
+syncRoutes.get("/sync/status", async (c) => {
+  const user = await requireUser(c)
+
+  if (!user) {
+    return c.json({ error: "Unauthorized" }, 401)
+  }
+
+  const [latestJob, [library]] = await Promise.all([
+    db
+      .select()
+      .from(syncJobs)
+      .where(eq(syncJobs.userId, user.id))
+      .orderBy(desc(syncJobs.createdAt))
+      .limit(1)
+      .then((rows) => rows[0] ?? null),
+    db
+      .select({
+        total: count(),
+        enriched: sql<number>`count(*) filter (where ${bookmarks.aiSummary} is not null)`,
+      })
+      .from(bookmarks)
+      .where(eq(bookmarks.userId, user.id)),
+  ])
+
+  return c.json({
+    job: latestJob,
+    library: {
+      total: Number(library?.total ?? 0),
+      enriched: Number(library?.enriched ?? 0),
+      pending: Math.max(0, Number(library?.total ?? 0) - Number(library?.enriched ?? 0)),
+    },
+  })
 })

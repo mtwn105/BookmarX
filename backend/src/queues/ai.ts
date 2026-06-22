@@ -5,9 +5,12 @@ import { redisConnection } from "./connection"
 export type AiJobData =
   | {
       bookmarkId: string
+      userId?: string
     }
 
-export const aiQueue = new Queue<AiJobData, void, "bookmark.embed">("ai", {
+export type AiJobName = "bookmark.embed" | "bookmark.enrich"
+
+export const aiQueue = new Queue<AiJobData, void, AiJobName>("ai", {
   connection: redisConnection,
   defaultJobOptions: {
     attempts: 3,

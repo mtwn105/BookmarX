@@ -1,4 +1,4 @@
-import { generateText } from "ai"
+import { generateText, streamText } from "ai"
 import { and, eq } from "drizzle-orm"
 import { Hono } from "hono"
 
@@ -17,13 +17,17 @@ aiRoutes.post("/ai/chat", async (c) => {
     return c.json({ error: "Unauthorized" }, 401)
   }
 
-  const body = (await c.req.json()) as { question?: string }
+  const body = (await c.req.json()) as {
+    question?: string
+    messages?: Array<{ role: "user" | "assistant"; content: string }>
+  }
+  const question = body.question?.trim() || body.messages?.at(-1)?.content.trim()
 
-  if (!body.question?.trim()) {
+  if (!question) {
     return c.json({ error: "Question is required" }, 400)
   }
 
-  const sources = await findRelevantBookmarks({ userId: user.id, query: body.question, limit: 8 })
+  const sources = await findRelevantBookmarks({ userId: user.id, query: question, limit: 8 })
 
   if (sources.length === 0) {
     return c.json({
@@ -43,13 +47,65 @@ aiRoutes.post("/ai/chat", async (c) => {
     model: chatModel,
     system:
       "You answer questions using only the provided X bookmark context. Do not invent bookmarks or facts. If context is weak, say so. Include bracket citations like [1] for every specific claim.",
-    prompt: `Question: ${body.question}\n\nSaved bookmark context:\n${context}`,
+    prompt: `${formatConversation(body.messages, question)}\n\nSaved bookmark context:\n${context}`,
   })
 
   return c.json({
     answer: result.text,
     sources,
   })
+})
+
+aiRoutes.post("/ai/chat/stream", async (c) => {
+  const user = await requireUser(c)
+
+  if (!user) {
+    return c.json({ error: "Unauthorized" }, 401)
+  }
+
+  const body = (await c.req.json()) as {
+    question?: string
+    messages?: Array<{ role: "user" | "assistant"; content: string }>
+  }
+  const question = body.question?.trim() || body.messages?.at(-1)?.content.trim()
+
+  if (!question) {
+    return c.json({ error: "Question is required" }, 400)
+  }
+
+  const sources = await findRelevantBookmarks({ userId: user.id, query: question, limit: 8 })
+
+  const context = sources.length > 0
+    ? sources
+        .map((source, index) => {
+          const author = source.authorUsername ? `@${source.authorUsername}` : "unknown author"
+          return `[${index + 1}] ${author}\nPost: ${source.postText}\nRelevant chunk: ${source.chunk}\nX URL: https://x.com/i/web/status/${source.xPostId}`
+        })
+        .join("\n\n")
+    : "No matching bookmarks found."
+
+  const result = streamText({
+    model: chatModel,
+    system:
+      "You answer questions using only the provided X bookmark context. Do not invent bookmarks or facts. If context is weak, say so. Include bracket citations like [1] for every specific claim.",
+    prompt: `${formatConversation(body.messages, question)}\n\nSaved bookmark context:\n${context}`,
+  })
+
+  const encoder = new TextEncoder()
+
+  const stream = new ReadableStream({
+    async pull(controller) {
+      for await (const chunk of result.textStream) {
+        controller.enqueue(encoder.encode(chunk))
+      }
+      controller.close()
+    },
+  })
+
+  c.header("Content-Type", "text/plain; charset=utf-8")
+  c.header("X-Sources", encodeURIComponent(JSON.stringify(sources)))
+
+  return c.body(stream)
 })
 
 aiRoutes.post("/ai/summarize/:bookmarkId", async (c) => {
@@ -150,4 +206,16 @@ function parseTagNames(value: string): string[] {
 
 function normalizeTags(values: unknown[]): string[] {
   return [...new Set(values.map((value) => String(value).trim().toLowerCase().replace(/^#/, "")).filter(Boolean))].slice(0, 5)
+}
+
+function formatConversation(
+  messages: Array<{ role: "user" | "assistant"; content: string }> | undefined,
+  question: string,
+) {
+  const history = (messages ?? [])
+    .slice(-8)
+    .map((message) => `${message.role === "user" ? "User" : "Assistant"}: ${message.content.slice(0, 2_000)}`)
+    .join("\n")
+
+  return history || `User: ${question}`
 }

@@ -1,8 +1,9 @@
-import { and, asc, eq } from "drizzle-orm"
+import { and, asc, count, eq } from "drizzle-orm"
 import { Hono } from "hono"
 
+import { ensureStandardFolders } from "../../ai/taxonomy"
 import { db } from "../../db/client"
-import { folders } from "../../db/schema"
+import { bookmarkFolders, folders } from "../../db/schema"
 import { requireUser } from "../require-user"
 
 export const folderRoutes = new Hono()
@@ -14,7 +15,21 @@ folderRoutes.get("/folders", async (c) => {
     return c.json({ error: "Unauthorized" }, 401)
   }
 
-  const rows = await db.select().from(folders).where(eq(folders.userId, user.id)).orderBy(asc(folders.sortOrder), asc(folders.name))
+  await ensureStandardFolders(user.id)
+  const rows = await db
+    .select({
+      id: folders.id,
+      name: folders.name,
+      color: folders.color,
+      parentId: folders.parentId,
+      sortOrder: folders.sortOrder,
+      bookmarkCount: count(bookmarkFolders.bookmarkId),
+    })
+    .from(folders)
+    .leftJoin(bookmarkFolders, eq(bookmarkFolders.folderId, folders.id))
+    .where(eq(folders.userId, user.id))
+    .groupBy(folders.id)
+    .orderBy(asc(folders.sortOrder), asc(folders.name))
 
   return c.json({ folders: rows })
 })

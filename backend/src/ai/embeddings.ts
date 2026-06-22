@@ -1,9 +1,20 @@
-import { and, cosineDistance, desc, eq, gt, sql } from "drizzle-orm"
+import { and, asc, cosineDistance, desc, eq, gt, sql } from "drizzle-orm"
 import { embed, embedMany } from "ai"
 
 import { db } from "../db/client"
-import { bookmarkChunks, bookmarkEmbeddings, bookmarks, postAuthors, posts } from "../db/schema"
-import { embeddingModel } from "./models"
+import {
+  bookmarkChunks,
+  bookmarkEmbeddings,
+  bookmarkFolders,
+  bookmarkTags,
+  bookmarkThreadPosts,
+  bookmarks,
+  folders,
+  postAuthors,
+  posts,
+  tags,
+} from "../db/schema"
+import { embeddingModel, embeddingModelId } from "./models"
 
 export type RelevantBookmark = {
   bookmarkId: string
@@ -29,7 +40,30 @@ export async function embedBookmark(bookmarkId: string) {
     throw new Error("Bookmark not found for embedding")
   }
 
-  const canonicalText = createCanonicalBookmarkText(row)
+  const [folderRows, tagRows, threadRows] = await Promise.all([
+    db
+      .select({ name: folders.name })
+      .from(bookmarkFolders)
+      .innerJoin(folders, eq(bookmarkFolders.folderId, folders.id))
+      .where(eq(bookmarkFolders.bookmarkId, bookmarkId)),
+    db
+      .select({ name: tags.name })
+      .from(bookmarkTags)
+      .innerJoin(tags, eq(bookmarkTags.tagId, tags.id))
+      .where(eq(bookmarkTags.bookmarkId, bookmarkId)),
+    db
+      .select({ text: posts.text })
+      .from(bookmarkThreadPosts)
+      .innerJoin(posts, eq(bookmarkThreadPosts.postId, posts.id))
+      .where(eq(bookmarkThreadPosts.bookmarkId, bookmarkId))
+      .orderBy(asc(bookmarkThreadPosts.position)),
+  ])
+  const canonicalText = createCanonicalBookmarkText({
+    ...row,
+    folders: folderRows.map((folder) => folder.name),
+    tags: tagRows.map((tag) => tag.name),
+    thread: threadRows.map((post) => post.text),
+  })
   const chunks = chunkText(canonicalText)
 
   await db.delete(bookmarkChunks).where(eq(bookmarkChunks.bookmarkId, bookmarkId))
@@ -55,7 +89,7 @@ export async function embedBookmark(bookmarkId: string) {
 
     await db.insert(bookmarkEmbeddings).values({
       chunkId: chunk.id,
-      model: embeddingModel,
+      model: embeddingModelId,
       dimensions: embeddings[index]?.length ?? 1536,
       embedding: embeddings[index],
     })
@@ -95,13 +129,21 @@ function createCanonicalBookmarkText(row: {
   post: typeof posts.$inferSelect
   author: typeof postAuthors.$inferSelect | null
   bookmark: typeof bookmarks.$inferSelect
+  folders: string[]
+  tags: string[]
+  thread: string[]
 }) {
   return [
     row.author ? `Author: ${row.author.displayName ?? row.author.username} (@${row.author.username})` : null,
     `Post: ${row.post.text}`,
+    row.thread.length > 1
+      ? row.thread.map((text, index) => `Thread part ${index + 1}: ${text}`).join("\n")
+      : null,
     row.post.contentType !== "unknown" ? `Content type: ${row.post.contentType}` : null,
     row.bookmark.note ? `Private note: ${row.bookmark.note}` : null,
     row.bookmark.aiSummary ? `Summary: ${row.bookmark.aiSummary}` : null,
+    row.folders.length > 0 ? `Folder: ${row.folders.join(", ")}` : null,
+    row.tags.length > 0 ? `Tags: ${row.tags.join(", ")}` : null,
   ]
     .filter(Boolean)
     .join("\n")

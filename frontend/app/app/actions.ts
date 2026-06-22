@@ -1,6 +1,8 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { cookies } from "next/headers"
+import { redirect } from "next/navigation"
 
 import { apiFetch } from "@/lib/api"
 
@@ -64,11 +66,16 @@ export async function updateSettings(formData: FormData) {
     body: JSON.stringify({
       scheduledSyncEnabled: formData.get("scheduledSyncEnabled") === "on",
       dailyBriefEnabled: formData.get("dailyBriefEnabled") === "on",
-      embeddingModel: String(formData.get("embeddingModel") ?? ""),
-      chatModel: String(formData.get("chatModel") ?? ""),
     }),
   })
   revalidatePath("/app/settings")
+}
+
+export async function logout() {
+  await apiFetch("/auth/logout", { method: "POST" })
+  const cookieStore = await cookies()
+  cookieStore.delete("bookmarx_session")
+  redirect("/")
 }
 
 export async function summarizeBookmark(formData: FormData) {

@@ -1,126 +1,56 @@
+import Link from "next/link"
 import { notFound } from "next/navigation"
+import { ArrowLeft01Icon, LinkSquare01Icon } from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
 
-import { Button, buttonVariants } from "@/components/ui/button"
-import { getBookmark, getFolders, getTags, xPostUrl } from "@/lib/api"
+import { BookmarkCard } from "@/components/bookmark-card"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Textarea } from "@/components/ui/textarea"
+import { getBookmark, xPostUrl } from "@/lib/api"
 
-import { addBookmarkFolder, addBookmarkTag, archiveBookmark, suggestBookmarkTags, summarizeBookmark, updateBookmarkNote } from "../../actions"
+import { updateBookmarkNote } from "../../actions"
 
 export default async function BookmarkDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const [row, folders, tags] = await Promise.all([getBookmark(id), getFolders(), getTags()])
+  const row = await getBookmark(id)
 
   if (!row) {
     notFound()
   }
 
   return (
-    <div className="space-y-6">
-      <section className="rounded-[2.5rem] border border-white/15 bg-background/85 p-5 shadow-2xl shadow-black/5 backdrop-blur-xl md:p-8">
-        <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
-          <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-              {row.author ? `@${row.author.username}` : "Saved post"}
-            </p>
-            <h1 className="mt-4 max-w-4xl text-3xl font-semibold leading-tight tracking-[-0.05em] md:text-5xl">{row.post.text}</h1>
-          </div>
-          <span className="w-fit rounded-full border border-border bg-muted px-4 py-2 text-sm text-muted-foreground">{row.bookmark.status}</span>
-        </div>
-        <div className="mt-8 grid gap-3 text-sm text-muted-foreground sm:grid-cols-4">
-          <Metric label="Likes" value={row.post.likeCount ?? 0} />
-          <Metric label="Reposts" value={row.post.repostCount ?? 0} />
-          <Metric label="Replies" value={row.post.replyCount ?? 0} />
-          <Metric label="Bookmarks" value={row.post.bookmarkCount ?? 0} />
-        </div>
-        <div className="mt-8 flex flex-wrap gap-3">
-          <a className={buttonVariants({ variant: "secondary" })} href={xPostUrl(row.post)} rel="noreferrer" target="_blank">
-            Open on X
-          </a>
-          <form action={archiveBookmark}>
-            <input name="id" type="hidden" value={row.bookmark.id} />
-            <Button className="rounded-full" type="submit" variant="outline">
-              Archive
-            </Button>
-          </form>
-          <form action={summarizeBookmark}>
-            <input name="id" type="hidden" value={row.bookmark.id} />
-            <Button className="rounded-full" type="submit" variant="outline">
-              Summarize
-            </Button>
-          </form>
-          <form action={suggestBookmarkTags}>
-            <input name="id" type="hidden" value={row.bookmark.id} />
-            <Button className="rounded-full" type="submit" variant="outline">
-              Suggest tags
-            </Button>
-          </form>
-        </div>
-      </section>
-      {row.bookmark.aiSummary ? (
-        <section className="rounded-[2rem] border border-white/15 bg-background/80 p-5 shadow-xl shadow-black/5 backdrop-blur-xl md:p-6">
-          <h2 className="text-xl font-semibold tracking-[-0.03em]">AI summary</h2>
-          <p className="mt-3 leading-7 text-muted-foreground">{row.bookmark.aiSummary}</p>
-        </section>
-      ) : null}
-      <section className="rounded-[2rem] border border-white/15 bg-background/80 p-5 shadow-xl shadow-black/5 backdrop-blur-xl md:p-6">
-        <h2 className="text-xl font-semibold tracking-[-0.03em]">Private note</h2>
-        <form action={updateBookmarkNote} className="mt-4 space-y-4">
-          <input name="id" type="hidden" value={row.bookmark.id} />
-          <textarea
-            className="min-h-36 w-full rounded-3xl border border-border bg-background p-4 outline-none ring-ring/20 transition focus:ring-4"
-            defaultValue={row.bookmark.note ?? ""}
-            name="note"
-            placeholder="Add why this bookmark matters..."
-          />
-          <Button className="rounded-full" type="submit">
-            Save note
-          </Button>
-        </form>
-      </section>
-      <section className="grid gap-4 md:grid-cols-2">
-        <form action={addBookmarkFolder} className="rounded-[2rem] border border-white/15 bg-background/80 p-5 shadow-xl shadow-black/5 backdrop-blur-xl md:p-6">
-          <input name="bookmarkId" type="hidden" value={row.bookmark.id} />
-          <h2 className="text-xl font-semibold tracking-[-0.03em]">Add to folder</h2>
-          <div className="mt-4 flex gap-3">
-            <select className="h-11 min-w-0 flex-1 rounded-full border border-border bg-background px-4" name="folderId">
-              <option value="">Choose folder</option>
-              {folders.map((folder) => (
-                <option key={folder.id} value={folder.id}>
-                  {folder.name}
-                </option>
-              ))}
-            </select>
-            <Button className="rounded-full" type="submit" variant="secondary">
-              Add
-            </Button>
-          </div>
-        </form>
-        <form action={addBookmarkTag} className="rounded-[2rem] border border-white/15 bg-background/80 p-5 shadow-xl shadow-black/5 backdrop-blur-xl md:p-6">
-          <input name="bookmarkId" type="hidden" value={row.bookmark.id} />
-          <h2 className="text-xl font-semibold tracking-[-0.03em]">Add tag</h2>
-          <div className="mt-4 flex gap-3">
-            <select className="h-11 min-w-0 flex-1 rounded-full border border-border bg-background px-4" name="tagId">
-              <option value="">Choose tag</option>
-              {tags.map((tag) => (
-                <option key={tag.id} value={tag.id}>
-                  {tag.name}
-                </option>
-              ))}
-            </select>
-            <Button className="rounded-full" type="submit" variant="secondary">
-              Add
-            </Button>
-          </div>
-        </form>
-      </section>
-    </div>
-  )
-}
+    <div className="mx-auto max-w-2xl space-y-5">
+      <div className="flex items-center justify-between">
+        <Button render={<Link href="/app" />} variant="ghost">
+          <HugeiconsIcon icon={ArrowLeft01Icon} />
+          Library
+        </Button>
+        <Button render={<a href={xPostUrl(row.post)} rel="noreferrer" target="_blank" />} variant="outline">
+          Open on X
+          <HugeiconsIcon icon={LinkSquare01Icon} />
+        </Button>
+      </div>
 
-function Metric({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-2xl border border-border bg-muted/35 p-4">
-      <p className="text-2xl font-semibold text-foreground">{value.toLocaleString()}</p>
-      <p>{label}</p>
+      <BookmarkCard row={row} />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Private note</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form action={updateBookmarkNote} className="space-y-3">
+            <input name="id" type="hidden" value={row.bookmark.id} />
+            <Textarea
+              defaultValue={row.bookmark.note ?? ""}
+              name="note"
+              placeholder="Add your own context or why this matters…"
+              rows={5}
+            />
+            <Button type="submit">Save note</Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   )
 }

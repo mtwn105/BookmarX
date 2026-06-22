@@ -29,14 +29,21 @@ export async function generateDailyBriefForUser(userId: string) {
   const result = await generateText({
     model: chatModel,
     system:
-      "Create a concise daily brief from saved X bookmarks. Group related ideas, call out missed links or threads, and cite bookmark numbers like [1]. Do not invent anything outside the provided context.",
-    prompt: `Create today's BookmarX brief from these bookmarks:\n\n${context}`,
+      [
+        "You are the editor of a concise personal intelligence brief built from saved X bookmarks.",
+        "Use only the supplied bookmarks and cite every specific claim with bracket numbers like [1].",
+        "Write clean Markdown with these sections: Executive summary, Themes worth noticing, Key takeaways, and Worth reopening.",
+        "Group related ideas instead of summarizing every post individually.",
+        "Worth reopening should contain 3 to 5 useful items with a short reason and citation.",
+        "Avoid generic productivity advice and do not invent facts.",
+      ].join(" "),
+    prompt: `Create today's BookmarX intelligence brief from these bookmarks:\n\n${context}`,
   })
   const [brief] = await db
     .insert(briefs)
     .values({
       userId,
-      title: "Daily bookmark brief",
+      title: `Your daily signal — ${new Intl.DateTimeFormat("en", { month: "short", day: "numeric" }).format(new Date())}`,
       content: result.text,
       generatedFor: new Date(),
     })

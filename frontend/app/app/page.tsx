@@ -1,45 +1,86 @@
+import { RefreshIcon } from "@hugeicons/core-free-icons"
+import { HugeiconsIcon } from "@hugeicons/react"
+
 import { BookmarkCard } from "@/components/bookmark-card"
+import { LibraryFilters } from "@/components/library-filters"
+import { SyncProgress } from "@/components/sync-progress"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
-import { getBookmarks, getSyncJobs } from "@/lib/api"
+import {
+  getBookmarkFilterOptions,
+  getBookmarks,
+  getFolders,
+  getSyncJobs,
+  getSyncStatus,
+  type BookmarkFilters,
+} from "@/lib/api"
 
 import { startSync } from "./actions"
 
-export default async function LibraryPage() {
-  const [bookmarks, syncJobs] = await Promise.all([getBookmarks(), getSyncJobs()])
+export default async function LibraryPage({
+  searchParams,
+}: {
+  searchParams: Promise<BookmarkFilters>
+}) {
+  const filters = await searchParams
+  const [bookmarks, syncJobs, syncStatus, folders, filterOptions] = await Promise.all([
+    getBookmarks({ ...filters, limit: 100 }),
+    getSyncJobs(),
+    getSyncStatus(),
+    getFolders(),
+    getBookmarkFilterOptions(),
+  ])
   const latestSync = syncJobs[0]
+  const syncInProgress = latestSync?.status === "queued" || latestSync?.status === "running"
 
   return (
     <div className="space-y-6">
-      <section className="overflow-hidden rounded-[2.25rem] border border-white/15 bg-background/80 p-5 shadow-2xl shadow-black/5 backdrop-blur-xl md:p-8">
-        <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Library</p>
-            <h1 className="mt-3 text-4xl font-semibold tracking-[-0.06em] md:text-6xl">Your saved signal.</h1>
-            <p className="mt-3 max-w-2xl text-muted-foreground">
-              Sync X bookmarks, review the newest posts, and prepare them for folders, tags, search, and AI retrieval.
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-sm font-medium text-primary">Library</p>
+          <h1 className="mt-1 text-3xl font-semibold tracking-tight">Your saved knowledge</h1>
+          <p className="mt-2 text-muted-foreground">
+            Automatically summarized, tagged, and organized when X syncs.
+          </p>
+        </div>
+        <form action={startSync}>
+          <Button disabled={syncInProgress} type="submit">
+            <HugeiconsIcon className={syncInProgress ? "animate-spin" : ""} icon={RefreshIcon} strokeWidth={2} />
+            {syncInProgress ? "Syncing…" : "Sync X"}
+          </Button>
+        </form>
+      </div>
+
+      <LibraryFilters filters={filters} folders={folders} options={filterOptions} />
+
+      <SyncProgress initialStatus={syncStatus} />
+
+      {latestSync?.status === "failed" ? (
+        <Alert variant="destructive">
+          <AlertTitle>Sync failed</AlertTitle>
+          <AlertDescription>{latestSync.errorMessage ?? "Check the worker and X API configuration."}</AlertDescription>
+        </Alert>
+      ) : null}
+
+      {latestSync?.status === "completed" ? (
+        <p className="text-xs text-muted-foreground">
+          Last synced {new Date(latestSync.finishedAt ?? latestSync.createdAt).toLocaleString()} ·{" "}
+          {latestSync.resourcesFetched} posts fetched
+        </p>
+      ) : null}
+
+      <section className="grid items-start gap-4 lg:grid-cols-2">
+        {bookmarks.map((row) => (
+          <BookmarkCard key={row.bookmark.id} row={row} />
+        ))}
+        {bookmarks.length === 0 ? (
+          <div className="rounded-2xl border border-dashed p-10 text-center">
+            <h2 className="font-medium">{filters.q ? "No matching bookmarks" : "Your library is empty"}</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {filters.q ? "Try broader filters." : "Run your first X sync to build the library."}
             </p>
           </div>
-          <form action={startSync}>
-            <Button className="h-12 rounded-full px-6" type="submit">
-              Sync X bookmarks
-            </Button>
-          </form>
-        </div>
-        {latestSync ? (
-          <div className="mt-6 rounded-2xl border border-border bg-muted/35 p-4 text-sm text-muted-foreground">
-            Latest sync: <strong className="text-foreground">{latestSync.status}</strong> · {latestSync.resourcesFetched} resources · estimated ${""}
-            {(latestSync.estimatedCostMicros / 1_000_000).toFixed(4)}
-          </div>
         ) : null}
-      </section>
-      <section className="grid gap-4 lg:grid-cols-2">
-        {bookmarks.length > 0 ? (
-          bookmarks.map((row) => <BookmarkCard key={row.bookmark.id} row={row} />)
-        ) : (
-          <div className="rounded-[2rem] border border-dashed border-border bg-background/70 p-8 text-center text-muted-foreground lg:col-span-2">
-            No bookmarks synced yet. Connect X and run your first sync.
-          </div>
-        )}
       </section>
     </div>
   )

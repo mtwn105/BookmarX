@@ -72,7 +72,13 @@ authRoutes.get("/me", async (c) => {
     return c.json({ user: null }, 401)
   }
 
-  return c.json({ user })
+  const [account] = await db
+    .select({ username: xAccounts.username })
+    .from(xAccounts)
+    .where(eq(xAccounts.userId, user.id))
+    .limit(1)
+
+  return c.json({ user: { ...user, username: account?.username ?? null } })
 })
 
 async function upsertUserFromXAccount(

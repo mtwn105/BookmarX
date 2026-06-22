@@ -2,6 +2,7 @@ import { Worker } from "bullmq"
 
 import { env } from "./config/env"
 import { runEmbedBookmarkJob } from "./jobs/embed-bookmark"
+import { enrichBookmark } from "./jobs/enrich-bookmark"
 import { cleanupOldJobs, enqueueScheduledSyncs, generateScheduledBriefs } from "./jobs/scheduled-sync"
 import { syncBookmarks } from "./jobs/sync-bookmarks"
 import type { AiJobData } from "./queues/ai"
@@ -44,17 +45,31 @@ const syncWorker = new Worker<SyncBookmarksJobData>(
 const aiWorker = new Worker<AiJobData>(
   "ai",
   async (job) => {
-    if (job.name !== "bookmark.embed") {
-      throw new Error(`Unknown AI job: ${job.name}`)
+    if (job.name === "bookmark.embed") {
+      await runEmbedBookmarkJob(job.data)
+      return
     }
 
-    await runEmbedBookmarkJob(job.data)
+    if (job.name === "bookmark.enrich" && job.data.userId) {
+      await enrichBookmark({ bookmarkId: job.data.bookmarkId, userId: job.data.userId })
+      return
+    }
+
+    throw new Error(`Unknown AI job: ${job.name}`)
   },
   { connection: redisConnection },
 )
 
+syncWorker.on("completed", (job) => {
+  console.log(`Sync job ${job.id} completed`)
+})
+
 syncWorker.on("failed", (job, error) => {
   console.error(`Sync job ${job?.id ?? "unknown"} failed`, error)
+})
+
+aiWorker.on("completed", (job) => {
+  console.log(`AI job ${job.id} completed`)
 })
 
 aiWorker.on("failed", (job, error) => {

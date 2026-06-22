@@ -158,6 +158,7 @@ export const postUrls = pgTable(
     displayUrl: text("display_url"),
     title: text("title"),
     description: text("description"),
+    imageUrl: text("image_url"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -255,6 +256,24 @@ export const bookmarkTags = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [primaryKey({ columns: [table.bookmarkId, table.tagId] })],
+)
+
+export const bookmarkThreadPosts = pgTable(
+  "bookmark_thread_posts",
+  {
+    bookmarkId: uuid("bookmark_id")
+      .notNull()
+      .references(() => bookmarks.id, { onDelete: "cascade" }),
+    postId: uuid("post_id")
+      .notNull()
+      .references(() => posts.id, { onDelete: "cascade" }),
+    position: integer("position").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.bookmarkId, table.postId] }),
+    index("bookmark_thread_posts_bookmark_position_idx").on(table.bookmarkId, table.position),
+  ],
 )
 
 export const bookmarkChunks = pgTable(

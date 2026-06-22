@@ -5,6 +5,7 @@ export type User = {
   name: string | null
   email: string | null
   imageUrl: string | null
+  username: string | null
 }
 
 export type PostAuthor = {
@@ -25,6 +26,7 @@ export type Post = {
   repostCount: number | null
   replyCount: number | null
   bookmarkCount: number | null
+  rawJson?: Record<string, unknown>
 }
 
 export type Bookmark = {
@@ -37,10 +39,56 @@ export type Bookmark = {
   xBookmarkedAt: string | null
 }
 
+export type PostUrl = {
+  id: string
+  postId: string
+  url: string
+  expandedUrl: string | null
+  displayUrl: string | null
+  title: string | null
+  description: string | null
+  imageUrl: string | null
+}
+
+export type PostMedia = {
+  id: string
+  postId: string
+  mediaKey: string
+  type: "photo" | "video" | "animated_gif"
+  url: string | null
+  previewImageUrl: string | null
+  rawJson: {
+    alt_text?: string
+    width?: number
+    height?: number
+    duration_ms?: number
+    variants?: Array<{
+      bit_rate?: number
+      content_type: string
+      url: string
+    }>
+  } | null
+}
+
+export type QuotedPost = {
+  post: Post
+  author: PostAuthor | null
+  urls: PostUrl[]
+  media: PostMedia[]
+}
+
+export type ThreadPost = QuotedPost
+
 export type BookmarkRow = {
   bookmark: Bookmark
   post: Post
   author: PostAuthor | null
+  urls: PostUrl[]
+  media: PostMedia[]
+  folders: Folder[]
+  tags: Tag[]
+  quotedPost: QuotedPost | null
+  threadPosts: ThreadPost[]
 }
 
 export type Folder = {
@@ -49,12 +97,33 @@ export type Folder = {
   color: string | null
   parentId: string | null
   sortOrder: number
+  bookmarkCount: number
 }
 
 export type Tag = {
   id: string
   name: string
   color: string | null
+}
+
+export type BookmarkFilters = {
+  q?: string
+  folderId?: string
+  tagId?: string
+  author?: string
+  contentType?: string
+  media?: "with" | "without"
+  postedFrom?: string
+  postedTo?: string
+  syncedFrom?: string
+  syncedTo?: string
+  sort?: "newest" | "oldest"
+  limit?: number
+}
+
+export type BookmarkFilterOptions = {
+  authors: Array<{ username: string; displayName: string | null }>
+  tags: Array<{ id: string; name: string; color: string | null }>
 }
 
 export type SyncJob = {
@@ -66,6 +135,15 @@ export type SyncJob = {
   createdAt: string
   startedAt: string | null
   finishedAt: string | null
+}
+
+export type SyncStatus = {
+  job: SyncJob | null
+  library: {
+    total: number
+    enriched: number
+    pending: number
+  }
 }
 
 export type AiAnswer = {
@@ -111,7 +189,7 @@ export type UserSettings = {
   dailyBriefEnabled: boolean
 }
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
+const apiUrl = process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
 
 export async function getMe(): Promise<User | null> {
   const response = await apiFetch<{ user: User | null }>("/me", { allowUnauthorized: true })
@@ -119,11 +197,22 @@ export async function getMe(): Promise<User | null> {
   return response?.user ?? null
 }
 
-export async function getBookmarks(query?: string): Promise<BookmarkRow[]> {
-  const search = query ? `?q=${encodeURIComponent(query)}` : ""
+export async function getBookmarks(filters?: string | BookmarkFilters): Promise<BookmarkRow[]> {
+  const normalized = typeof filters === "string" ? { q: filters } : filters
+  const params = new URLSearchParams()
+  for (const [key, value] of Object.entries(normalized ?? {})) {
+    if (value !== undefined && value !== "") {
+      params.set(key, String(value))
+    }
+  }
+  const search = params.size > 0 ? `?${params.toString()}` : ""
   const response = await apiFetch<{ bookmarks: BookmarkRow[] }>(`/bookmarks${search}`)
 
   return response.bookmarks
+}
+
+export async function getBookmarkFilterOptions(): Promise<BookmarkFilterOptions> {
+  return apiFetch<BookmarkFilterOptions>("/bookmarks/filter-options")
 }
 
 export async function getBookmark(id: string): Promise<BookmarkRow | null> {
@@ -146,6 +235,10 @@ export async function getSyncJobs(): Promise<SyncJob[]> {
   const response = await apiFetch<{ jobs: SyncJob[] }>("/sync/jobs")
 
   return response.jobs
+}
+
+export async function getSyncStatus(): Promise<SyncStatus> {
+  return apiFetch<SyncStatus>("/sync/status")
 }
 
 export async function askBookmarks(question: string): Promise<AiAnswer> {
