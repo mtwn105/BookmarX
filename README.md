@@ -44,7 +44,7 @@ Sync your X bookmarks, organize them with AI-powered folders and tags, index the
 ### One-liner
 
 ```bash
-git clone https://github.com/anomalyco/BookmarX.git
+git clone https://github.com/mtwn105/BookmarX.git
 cd BookmarX
 cp .env.example .env
 # Edit .env with your X_CLIENT_ID, X_CLIENT_SECRET, AI_API_KEY, ENCRYPTION_KEY
@@ -155,7 +155,7 @@ BookmarX/
 
 ## Status
 
-BookmarX is in active development. See the [GitHub Issues](https://github.com/anomalyco/BookmarX/issues) for planned work and [open issues](https://github.com/anomalyco/BookmarX/issues).
+BookmarX is in active development. See the [GitHub Issues](https://github.com/mtwn105/BookmarX/issues) for planned work and [open issues](https://github.com/mtwn105/BookmarX/issues).
 
 ## License
 

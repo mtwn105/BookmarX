@@ -44,7 +44,7 @@ Harassment, hate speech, and discriminatory behavior are not tolerated.
 
 ```bash
 # Clone and enter
-git clone https://github.com/your-username/BookmarX.git
+git clone https://github.com/mtwn105/BookmarX.git
 cd BookmarX
 
 # Copy environment
@@ -186,7 +186,7 @@ refactor(frontend): extract bookmark card component
 
 ## Bug Reports & Feature Requests
 
-- **Issues:** Use [GitHub Issues](https://github.com/anomalyco/BookmarX/issues)
+- **Issues:** Use [GitHub Issues](https://github.com/mtwn105/BookmarX/issues)
 - **Bug reports:** Include steps to reproduce, expected vs actual behavior, and environment details
 - **Feature requests:** Describe the problem you're solving, not just the solution you want
 
