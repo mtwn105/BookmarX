@@ -361,6 +361,39 @@ export const briefs = pgTable(
   (table) => [index("briefs_user_id_generated_for_idx").on(table.userId, table.generatedFor)],
 )
 
+export const conversations = pgTable(
+  "conversations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    title: text("title").notNull().default("New conversation"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("conversations_user_id_updated_at_idx").on(table.userId, table.updatedAt),
+  ],
+)
+
+export const conversationMessages = pgTable(
+  "conversation_messages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    conversationId: uuid("conversation_id")
+      .notNull()
+      .references(() => conversations.id, { onDelete: "cascade" }),
+    role: text("role", { enum: ["user", "assistant"] }).notNull(),
+    content: text("content").notNull(),
+    sources: jsonb("sources").$type<Array<Record<string, unknown>>>(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("conversation_messages_conversation_id_created_at_idx").on(table.conversationId, table.createdAt),
+  ],
+)
+
 export const events = pgTable(
   "events",
   {

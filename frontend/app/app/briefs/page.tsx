@@ -1,12 +1,14 @@
-import { Calendar01Icon } from "@hugeicons/core-free-icons"
+import { Calendar01Icon, SparklesIcon } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { getBriefs } from "@/lib/api"
+import { generateDailyBrief } from "../actions"
 
 export default async function BriefsPage() {
   const briefs = await getBriefs()
@@ -14,12 +16,20 @@ export default async function BriefsPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <p className="text-xs font-bold uppercase tracking-[0.14em] text-ai">Intelligent briefs</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">What deserves another look</h1>
-        <p className="mt-2 text-muted-foreground">
-          Automatic editorial summaries connect the ideas, tools, and themes in recent bookmarks.
-        </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-ai">Intelligent briefs</p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">What deserves another look</h1>
+          <p className="mt-2 text-muted-foreground">
+            Automatic editorial summaries connect the ideas, tools, and themes in recent bookmarks.
+          </p>
+        </div>
+        <form action={generateDailyBrief}>
+          <Button type="submit">
+            <HugeiconsIcon icon={SparklesIcon} strokeWidth={2} />
+            Generate brief
+          </Button>
+        </form>
       </div>
 
       {latest ? (

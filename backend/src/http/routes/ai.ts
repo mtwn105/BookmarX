@@ -1,11 +1,11 @@
 import { generateText, streamText } from "ai"
-import { and, eq } from "drizzle-orm"
+import { and, asc, eq, sql } from "drizzle-orm"
 import { Hono } from "hono"
 
 import { findRelevantBookmarks } from "../../ai/embeddings"
 import { chatModel } from "../../ai/models"
 import { db } from "../../db/client"
-import { bookmarkTags, bookmarks, postAuthors, posts, tags } from "../../db/schema"
+import { bookmarkTags, bookmarks, conversationMessages, conversations, postAuthors, posts, tags } from "../../db/schema"
 import { requireUser } from "../require-user"
 
 export const aiRoutes = new Hono()
@@ -66,11 +66,44 @@ aiRoutes.post("/ai/chat/stream", async (c) => {
   const body = (await c.req.json()) as {
     question?: string
     messages?: Array<{ role: "user" | "assistant"; content: string }>
+    conversationId?: string
   }
   const question = body.question?.trim() || body.messages?.at(-1)?.content.trim()
 
   if (!question) {
     return c.json({ error: "Question is required" }, 400)
+  }
+
+  let conversationId = body.conversationId
+  if (conversationId) {
+    const [conversation] = await db
+      .select()
+      .from(conversations)
+      .where(and(eq(conversations.id, conversationId), eq(conversations.userId, user.id)))
+      .limit(1)
+
+    if (conversation) {
+      await db.insert(conversationMessages).values({
+        conversationId: conversation.id,
+        role: "user",
+        content: question,
+      })
+
+      const msgCount = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(conversationMessages)
+        .where(eq(conversationMessages.conversationId, conversation.id))
+
+      if (Number(msgCount[0]?.count ?? 0) === 1) {
+        const trimmed = question.slice(0, 120)
+        await db
+          .update(conversations)
+          .set({ title: trimmed.length < question.length ? `${trimmed}...` : trimmed, updatedAt: new Date() })
+          .where(eq(conversations.id, conversation.id))
+      }
+    } else {
+      conversationId = undefined
+    }
   }
 
   const sources = await findRelevantBookmarks({ userId: user.id, query: question, limit: 8 })
@@ -92,20 +125,73 @@ aiRoutes.post("/ai/chat/stream", async (c) => {
   })
 
   const encoder = new TextEncoder()
+  let fullResponse = ""
 
   const stream = new ReadableStream({
     async pull(controller) {
       for await (const chunk of result.textStream) {
+        fullResponse += chunk
         controller.enqueue(encoder.encode(chunk))
       }
+
+      if (conversationId && fullResponse) {
+        await db.insert(conversationMessages).values({
+          conversationId,
+          role: "assistant",
+          content: fullResponse,
+          sources: sources as unknown as Array<Record<string, unknown>>,
+        })
+
+        await db
+          .update(conversations)
+          .set({ updatedAt: new Date() })
+          .where(eq(conversations.id, conversationId))
+      }
+
       controller.close()
     },
   })
 
   c.header("Content-Type", "text/plain; charset=utf-8")
+  if (conversationId) {
+    c.header("X-Conversation-Id", conversationId)
+  }
   c.header("X-Sources", encodeURIComponent(JSON.stringify(sources)))
 
   return c.body(stream)
+})
+
+aiRoutes.post("/ai/batch/enrich-pending", async (c) => {
+  const user = await requireUser(c)
+
+  if (!user) {
+    return c.json({ error: "Unauthorized" }, 401)
+  }
+
+  const pending = await db
+    .select({ id: bookmarks.id, createdAt: bookmarks.createdAt })
+    .from(bookmarks)
+    .where(and(eq(bookmarks.userId, user.id), eq(bookmarks.aiSummary, sql`null`)))
+    .orderBy(asc(bookmarks.createdAt))
+    .limit(25)
+
+  if (pending.length === 0) {
+    return c.json({ queued: 0, message: "No pending bookmarks to enrich" })
+  }
+
+  const { aiQueue } = await import("../../queues/ai")
+  let queued = 0
+
+  for (const bookmark of pending) {
+    await aiQueue.add(
+      "bookmark.enrich",
+      { bookmarkId: bookmark.id, userId: user.id },
+      { jobId: `enrich-batch-${bookmark.id}-${Date.now()}` },
+    )
+    queued++
+  }
+
+  return c.json({ queued, total: pending.length })
 })
 
 aiRoutes.post("/ai/summarize/:bookmarkId", async (c) => {

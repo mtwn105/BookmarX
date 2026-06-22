@@ -1,4 +1,4 @@
-import { and, asc, eq } from "drizzle-orm"
+import { and, asc, eq, inArray, sql } from "drizzle-orm"
 
 import { getValidXAuthForUser } from "../auth/x-token"
 import { db } from "../db/client"
@@ -60,6 +60,38 @@ export async function syncBookmarks(input: { syncJobId: string; userId: string }
       const mediaByKey = new Map(page.includes?.media?.map((media) => [media.media_key, media]) ?? [])
       const pagePosts = page.data ?? []
 
+      const existingIds = pagePosts.length > 0
+        ? new Set(
+            (
+              await db
+                .select({ xPostId: bookmarks.xPostId })
+                .from(bookmarks)
+                .where(
+                  and(
+                    eq(bookmarks.userId, input.userId),
+                    inArray(bookmarks.xPostId, pagePosts.map((p) => p.id)),
+                  ),
+                )
+            ).map((r) => r.xPostId),
+          )
+        : new Set<string>()
+      const newPosts = pagePosts.filter((post) => !existingIds.has(post.id))
+
+      if (newPosts.length === 0 && existingIds.size > 0) {
+        cursor = null
+        await db
+          .update(syncJobs)
+          .set({
+            cursor,
+            resourcesFetched,
+            status: "completed",
+            finishedAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .where(eq(syncJobs.id, input.syncJobId))
+        break
+      }
+
       for (const referencedPost of page.includes?.tweets ?? []) {
         await upsertPostRecord({
           post: referencedPost,
@@ -68,7 +100,7 @@ export async function syncBookmarks(input: { syncJobId: string; userId: string }
         })
       }
 
-      for (const post of pagePosts) {
+      for (const post of newPosts) {
         const author = inputAuthor(post, authorsByXId)
         const stored = await upsertBookmarkPost({
           userId: input.userId,
@@ -98,7 +130,7 @@ export async function syncBookmarks(input: { syncJobId: string; userId: string }
         }
       }
 
-      resourcesFetched += pagePosts.length
+      resourcesFetched += newPosts.length
       cursor = page.meta?.next_token ?? null
 
       await db

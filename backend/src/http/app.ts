@@ -8,6 +8,7 @@ import { analyticsRoutes } from "./routes/analytics"
 import { authRoutes } from "./routes/auth"
 import { bookmarkRoutes } from "./routes/bookmarks"
 import { briefRoutes } from "./routes/briefs"
+import { conversationRoutes } from "./routes/conversations"
 import { folderRoutes } from "./routes/folders"
 import { searchRoutes } from "./routes/search"
 import { settingsRoutes } from "./routes/settings"
@@ -39,6 +40,7 @@ app.route("/", analyticsRoutes)
 app.route("/", authRoutes)
 app.route("/", bookmarkRoutes)
 app.route("/", briefRoutes)
+app.route("/", conversationRoutes)
 app.route("/", folderRoutes)
 app.route("/", searchRoutes)
 app.route("/", settingsRoutes)

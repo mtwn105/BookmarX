@@ -180,6 +180,28 @@ export type AnalyticsOverview = {
   }>
 }
 
+export type Conversation = {
+  id: string
+  title: string
+  createdAt: string
+  updatedAt: string
+  messageCount: number
+}
+
+export type ConversationMessage = {
+  id: string
+  conversationId: string
+  role: "user" | "assistant"
+  content: string
+  sources: Array<Record<string, unknown>> | null
+  createdAt: string
+}
+
+export type ConversationDetail = {
+  conversation: Conversation
+  messages: ConversationMessage[]
+}
+
 export type UserSettings = {
   id: string
   aiProvider: string
@@ -264,6 +286,44 @@ export async function getAnalyticsOverview(): Promise<AnalyticsOverview> {
   const response = await apiFetch<{ overview: AnalyticsOverview }>("/analytics/overview")
 
   return response.overview
+}
+
+export async function getConversations(): Promise<Conversation[]> {
+  const response = await apiFetch<{ conversations: Conversation[] }>("/conversations")
+
+  return response.conversations
+}
+
+export async function getConversation(id: string): Promise<ConversationDetail | null> {
+  return apiFetch<ConversationDetail>(`/conversations/${id}`, { allowNotFound: true })
+}
+
+export async function createConversation(title?: string): Promise<Conversation> {
+  const response = await apiFetch<{ conversation: Conversation }>("/conversations", {
+    method: "POST",
+    body: JSON.stringify({ title }),
+  })
+
+  return response.conversation
+}
+
+export async function updateConversation(id: string, title: string): Promise<Conversation> {
+  const response = await apiFetch<{ conversation: Conversation }>(`/conversations/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ title }),
+  })
+
+  return response.conversation
+}
+
+export async function deleteConversation(id: string): Promise<void> {
+  await apiFetch(`/conversations/${id}`, { method: "DELETE" })
+}
+
+export async function generateConversationTitle(id: string): Promise<string> {
+  const response = await apiFetch<{ title: string }>(`/conversations/${id}/generate-title`, { method: "POST" })
+
+  return response.title
 }
 
 export async function getSettings(): Promise<UserSettings> {
