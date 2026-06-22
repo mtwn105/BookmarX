@@ -26,7 +26,10 @@ export function BookmarkCard({
   showSummary?: boolean
 }) {
   return (
-    <Card className="relative h-full overflow-visible py-0 transition-shadow hover:shadow-md" size={compact ? "sm" : "default"}>
+    <Card
+      className="relative h-full overflow-visible py-0 transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-[0_16px_40px_rgba(37,99,235,0.08)]"
+      size={compact ? "sm" : "default"}
+    >
       <Link
         aria-label={`Open bookmark by ${row.author?.displayName ?? row.author?.username ?? "unknown author"}`}
         className="absolute inset-0 z-10 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -56,7 +59,7 @@ export function BookmarkCard({
             <p className="mt-1 text-xs text-muted-foreground">AI organization pending</p>
           )}
           {row.threadPosts.length > 1 ? (
-            <Badge className="mt-2" variant="outline">
+            <Badge className="mt-2 border-primary/15 bg-secondary text-primary" variant="outline">
               Thread · {row.threadPosts.length} posts
             </Badge>
           ) : null}
@@ -83,9 +86,9 @@ export function BookmarkCard({
         )}
 
         {showSummary && row.bookmark.aiSummary ? (
-          <div className="mt-3 rounded-xl bg-muted/45 px-3 py-2.5">
-            <p className="text-xs font-medium text-muted-foreground">AI summary</p>
-            <p className="mt-1 text-sm leading-5">{row.bookmark.aiSummary}</p>
+          <div className="mt-4 rounded-xl border border-ai/10 bg-ai/[0.055] px-3.5 py-3">
+            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-ai">AI summary</p>
+            <p className="mt-1.5 text-sm leading-5 text-foreground/85">{row.bookmark.aiSummary}</p>
           </div>
         ) : null}
 
@@ -150,7 +153,7 @@ function Thread({ posts, postId }: { posts: BookmarkRow["threadPosts"]; postId: 
             <span className="absolute bottom-0 left-[5px] top-7 w-px bg-border" />
           ) : null}
           <div className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
-            <span className={cn("size-2.5 rounded-full bg-border", threadPost.post.id === postId && "bg-primary")} />
+            <span className={cn("size-2.5 rounded-full bg-[#c7d2e3]", threadPost.post.id === postId && "bg-primary ring-4 ring-primary/10")} />
             <time dateTime={threadPost.post.postedAt ?? undefined}>
               {threadPost.post.postedAt
                 ? new Date(threadPost.post.postedAt).toLocaleString("en", {

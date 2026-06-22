@@ -28,7 +28,7 @@ export default async function FoldersPage({
           </Link>
           <div className="mt-4 flex items-center gap-3">
             <span className="size-4 rounded" style={{ backgroundColor: selected.color ?? undefined }} />
-            <h1 className="text-3xl font-semibold tracking-tight">{selected.name}</h1>
+            <h1 className="text-3xl font-semibold tracking-[-0.035em]">{selected.name}</h1>
           </div>
           <p className="mt-2 text-muted-foreground">{selected.bookmarkCount} automatically classified bookmarks</p>
         </div>
@@ -49,14 +49,14 @@ export default async function FoldersPage({
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-sm font-medium text-primary">Smart folders</p>
-        <h1 className="mt-1 text-3xl font-semibold tracking-tight">Browse by subject</h1>
+        <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">Smart folders</p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">Browse by subject</h1>
         <p className="mt-2 text-muted-foreground">A stable taxonomy keeps your archive organized without folder maintenance.</p>
       </div>
       <section className="grid gap-3 sm:grid-cols-2">
         {folders.map((folder) => (
           <Link href={`/app/folders?folder=${folder.id}`} key={folder.id}>
-            <Card className="h-full transition-colors hover:bg-muted/35" size="sm">
+            <Card className="h-full transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-md" size="sm">
               <CardHeader className="grid-cols-[1fr_auto]">
                 <div className="flex items-center gap-3">
                   <span className="size-3 rounded-sm" style={{ backgroundColor: folder.color ?? undefined }} />

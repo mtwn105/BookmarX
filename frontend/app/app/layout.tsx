@@ -17,12 +17,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <SidebarProvider>
       <AppSidebar folders={folders} user={user} />
       <SidebarInset>
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b bg-background/90 px-4 backdrop-blur-xl">
+        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/80 bg-white/88 px-4 backdrop-blur-xl">
           <SidebarTrigger />
           <Separator className="h-4" orientation="vertical" />
           <LinkBrand />
         </header>
-        <div className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6 lg:py-8">{children}</div>
+        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-7 sm:px-7 lg:py-10">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   )
@@ -30,9 +30,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
 function LinkBrand() {
   return (
-    <div className="flex items-center gap-2 text-sm">
-      <span className="font-medium">BookmarX</span>
-      <span className="hidden text-muted-foreground sm:inline">Your X knowledge library</span>
+    <div className="flex items-center gap-2.5 text-sm">
+      <span className="font-semibold tracking-tight text-foreground">BookmarX</span>
+      <span className="hidden text-muted-foreground sm:inline">Your intelligent X library</span>
     </div>
   )
 }

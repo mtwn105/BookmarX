@@ -50,15 +50,15 @@ export function SyncProgress({ initialStatus }: { initialStatus: SyncStatus }) {
   }
 
   return (
-    <Card className="overflow-hidden" size="sm">
-      {active ? <div className="h-0.5 w-1/3 animate-[sync-slide_1.4s_ease-in-out_infinite] bg-primary" /> : null}
+    <Card className="overflow-hidden border-info/25 bg-white" size="sm">
+      {active ? <div className="h-0.5 w-1/3 animate-[sync-slide_1.4s_ease-in-out_infinite] bg-info" /> : null}
       <CardContent className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-center">
         <div className="flex min-w-0 items-start gap-3">
-          <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-info/15 text-[#087da9]">
             <HugeiconsIcon className={active ? "animate-spin" : ""} icon={RefreshIcon} size={17} />
           </div>
           <div className="min-w-0">
-            <p className="font-medium">
+            <p className="font-semibold text-foreground">
               {active
                 ? `Syncing X bookmarks · page ${Math.max(1, Math.ceil(status.job!.resourcesFetched / 50))}`
                 : "Library sync complete"}
@@ -71,7 +71,7 @@ export function SyncProgress({ initialStatus }: { initialStatus: SyncStatus }) {
         </div>
         <div className="grid grid-cols-2 gap-5 text-right text-sm tabular-nums">
           <div>
-            <p className="font-medium">{status.library.enriched.toLocaleString()}</p>
+            <p className="font-semibold text-ai">{status.library.enriched.toLocaleString()}</p>
             <p className="text-xs text-muted-foreground">AI organized</p>
           </div>
           <div>

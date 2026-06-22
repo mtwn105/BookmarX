@@ -25,7 +25,7 @@ export function PostContent({
           const label = resolved?.displayUrl ?? resolved?.title ?? part
           return (
             <a
-            className="relative z-20 break-words text-primary hover:underline"
+            className="relative z-20 break-words font-medium text-primary hover:underline"
               href={href}
               key={`${part}-${index}`}
               rel="noreferrer"
@@ -81,7 +81,7 @@ export function LinkPreview({ urls }: { urls: PostUrl[] }) {
     <div className="mt-3 grid gap-2">
       {previews.map((url) => (
         <a
-          className="relative z-20 grid overflow-hidden rounded-xl border bg-muted/25 transition-colors hover:bg-muted/50"
+          className="relative z-20 grid overflow-hidden rounded-xl border bg-white transition-[border-color,box-shadow] hover:border-primary/20 hover:shadow-md"
           href={url.expandedUrl ?? url.url}
           key={url.id}
           rel="noreferrer"

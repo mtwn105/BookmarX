@@ -44,23 +44,23 @@ export function AppSidebar({ user, folders }: { user: User; folders: Folder[] })
   const pathname = usePathname()
 
   return (
-    <Sidebar collapsible="icon" variant="inset">
-      <SidebarHeader>
+    <Sidebar className="border-r border-sidebar-border" collapsible="icon">
+      <SidebarHeader className="px-3 pt-3">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              className="h-12"
+              className="h-14 rounded-xl"
               isActive={pathname === "/app"}
               render={<Link href="/app" />}
               size="lg"
               tooltip="BookmarX"
             >
-              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <span className="text-sm font-semibold">BX</span>
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm shadow-primary/25">
+                <span className="text-sm font-bold tracking-tight">BX</span>
               </div>
               <div className="grid min-w-0 flex-1 text-left">
-                <span className="truncate font-semibold">BookmarX</span>
-                <span className="truncate text-xs text-muted-foreground">Intelligent archive</span>
+                <span className="truncate font-semibold tracking-tight">BookmarX</span>
+                <span className="truncate text-xs text-muted-foreground">X, organized for you</span>
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -68,12 +68,13 @@ export function AppSidebar({ user, folders }: { user: User; folders: Folder[] })
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
+        <SidebarGroup className="px-3">
           <SidebarGroupContent>
             <SidebarMenu>
               {primaryItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
+                    className="h-10 rounded-xl font-medium"
                     isActive={item.href === "/app" ? pathname === item.href : pathname.startsWith(item.href)}
                     render={<Link href={item.href} />}
                     tooltip={item.title}
@@ -87,8 +88,8 @@ export function AppSidebar({ user, folders }: { user: User; folders: Folder[] })
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarGroup>
-          <SidebarGroupLabel>Smart folders</SidebarGroupLabel>
+        <SidebarGroup className="px-3">
+          <SidebarGroupLabel className="px-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/80">Smart folders</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {folders.map((folder) => {
@@ -96,12 +97,13 @@ export function AppSidebar({ user, folders }: { user: User; folders: Folder[] })
                 return (
                   <SidebarMenuItem key={folder.id}>
                     <SidebarMenuButton
+                      className="h-9 rounded-xl"
                       isActive={pathname === "/app/folders"}
                       render={<Link href={href} />}
                       tooltip={folder.name}
                     >
                       <span
-                        className="size-2.5 shrink-0 rounded-sm"
+                        className="size-2.5 shrink-0 rounded-full ring-2 ring-white"
                         style={{ backgroundColor: folder.color ?? "var(--muted-foreground)" }}
                       />
                       <span>{folder.name}</span>
@@ -115,7 +117,7 @@ export function AppSidebar({ user, folders }: { user: User; folders: Folder[] })
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter>
+      <SidebarFooter className="border-t border-sidebar-border/80 p-3">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg">

@@ -13,8 +13,8 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-sm font-medium text-primary">Search</p>
-        <h1 className="mt-1 text-3xl font-semibold tracking-tight">Find anything you saved</h1>
+        <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">Search</p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">Find anything you saved</h1>
         <p className="mt-2 text-muted-foreground">Search post text, then use Chat when the question is conceptual.</p>
       </div>
       <form className="flex gap-2">

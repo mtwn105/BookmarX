@@ -29,7 +29,7 @@ export function MediaGallery({ media }: { media: PostMedia[] }) {
 
   return (
     <>
-      <div className="relative z-30 mt-3 overflow-hidden rounded-xl border bg-black/5 dark:bg-black/30">
+      <div className="relative z-30 mt-3 overflow-hidden rounded-xl border border-border bg-[#f7f8fa]">
         <MediaFrame
           item={active}
           onOpenImage={active.type === "photo" ? () => setLightboxOpen(true) : undefined}

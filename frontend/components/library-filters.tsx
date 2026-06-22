@@ -21,8 +21,8 @@ export function LibraryFilters({
   options: BookmarkFilterOptions
 }) {
   return (
-    <Card size="sm">
-      <CardContent>
+    <Card className="border-border/80 shadow-[0_8px_30px_rgba(13,19,43,0.025)]" size="sm">
+      <CardContent className="py-1">
         <form className="space-y-3">
           <div className="grid min-w-0 gap-2 lg:grid-cols-[minmax(16rem,2fr)_minmax(10rem,1fr)_minmax(10rem,1fr)]">
             <div className="relative min-w-0 flex-1">

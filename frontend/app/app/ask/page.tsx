@@ -115,15 +115,15 @@ export default function AskPage() {
   return (
     <div className="mx-auto flex min-h-[calc(100svh-8.5rem)] max-w-3xl flex-col">
       <div>
-        <p className="text-sm font-medium text-primary">Chat</p>
-        <h1 className="mt-1 text-3xl font-semibold tracking-tight">Ask your archive</h1>
+        <p className="text-xs font-bold uppercase tracking-[0.14em] text-ai">Intelligent chat</p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">Ask your archive</h1>
         <p className="mt-2 text-muted-foreground">Answers are grounded in your saved X posts and include citations.</p>
       </div>
 
       <div className="flex-1 py-8">
         {messages.length === 0 ? (
           <div className="mx-auto max-w-xl py-12 text-center">
-            <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
+            <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-ai text-ai-foreground shadow-lg shadow-ai/20">
               <HugeiconsIcon icon={ArtificialIntelligence01Icon} size={24} />
             </div>
             <h2 className="mt-4 text-lg font-semibold">Your bookmarks are the context</h2>
@@ -132,7 +132,7 @@ export default function AskPage() {
             </p>
             <div className="mt-6 grid gap-2">
               {suggestions.map((suggestion) => (
-                <Button key={suggestion} onClick={() => void sendMessage(suggestion)} variant="outline">
+                <Button className="h-auto justify-start py-3 text-left font-medium" key={suggestion} onClick={() => void sendMessage(suggestion)} variant="outline">
                   {suggestion}
                 </Button>
               ))}
@@ -147,7 +147,7 @@ export default function AskPage() {
         )}
       </div>
 
-      <div className="sticky bottom-0 -mx-2 bg-background/90 px-2 pb-2 pt-3 backdrop-blur-xl">
+      <div className="sticky bottom-0 -mx-2 bg-background/88 px-2 pb-2 pt-3 backdrop-blur-xl">
         <form
           className="relative"
           onSubmit={(event) => {
@@ -156,7 +156,7 @@ export default function AskPage() {
           }}
         >
           <Textarea
-            className="min-h-14 resize-none pr-14 shadow-sm"
+            className="min-h-16 resize-none border-ai/20 pr-14 shadow-[0_10px_35px_rgba(124,58,237,0.08)] focus-visible:border-ai focus-visible:ring-ai/15"
             onChange={(event) => setInput(event.target.value)}
             onKeyDown={(event) => {
               if (event.key === "Enter" && !event.shiftKey) {
@@ -180,7 +180,7 @@ export default function AskPage() {
               <span className="sr-only">Stop response</span>
             </Button>
           ) : (
-            <Button className="absolute bottom-2 right-2" disabled={!input.trim()} size="icon" type="submit">
+            <Button className="absolute bottom-2 right-2 bg-ai shadow-ai/20 hover:bg-[#6d28d9]" disabled={!input.trim()} size="icon" type="submit">
               <HugeiconsIcon icon={SentIcon} />
               <span className="sr-only">Send message</span>
             </Button>
@@ -199,7 +199,7 @@ function ChatMessage({ message, pending }: { message: Message; pending: boolean 
     <div className={cn("flex gap-3", !assistant && "justify-end")}>
       {assistant ? (
         <Avatar className="mt-0.5">
-          <AvatarFallback className="bg-primary text-primary-foreground">AI</AvatarFallback>
+          <AvatarFallback className="bg-ai text-ai-foreground">AI</AvatarFallback>
         </Avatar>
       ) : null}
       <div className={cn("min-w-0 max-w-[85%]", !assistant && "rounded-2xl bg-primary px-4 py-3 text-primary-foreground")}>
@@ -210,7 +210,7 @@ function ChatMessage({ message, pending }: { message: Message; pending: boolean 
             <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground [animation-delay:240ms]" />
           </div>
         ) : assistant ? (
-          <div className="prose prose-sm max-w-none text-foreground dark:prose-invert">
+          <div className="prose prose-sm max-w-none text-foreground">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
           </div>
         ) : (
@@ -220,7 +220,7 @@ function ChatMessage({ message, pending }: { message: Message; pending: boolean 
         {assistant && message.sources && message.sources.length > 0 ? (
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
             {message.sources.slice(0, 6).map((source, index) => (
-              <Card className="gap-2 p-3" key={source.bookmarkId} size="sm">
+              <Card className="gap-2 border-ai/10 bg-ai/[0.035] p-3 shadow-none transition-colors hover:border-ai/25" key={source.bookmarkId} size="sm">
                 <Link className="block" href={`/app/bookmarks/${source.bookmarkId}`}>
                   <p className="text-xs font-medium text-muted-foreground">
                     [{index + 1}] {source.authorUsername ? `@${source.authorUsername}` : "Saved post"}

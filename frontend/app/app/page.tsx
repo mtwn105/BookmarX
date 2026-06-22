@@ -34,12 +34,12 @@ export default async function LibraryPage({
   const syncInProgress = latestSync?.status === "queued" || latestSync?.status === "running"
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-medium text-primary">Library</p>
-          <h1 className="mt-1 text-3xl font-semibold tracking-tight">Your saved knowledge</h1>
-          <p className="mt-2 text-muted-foreground">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">Library</p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">Your saved knowledge</h1>
+          <p className="mt-2 max-w-2xl text-muted-foreground">
             Automatically summarized, tagged, and organized when X syncs.
           </p>
         </div>
@@ -69,7 +69,7 @@ export default async function LibraryPage({
         </p>
       ) : null}
 
-      <section className="grid items-start gap-4 lg:grid-cols-2">
+      <section className="grid items-start gap-5 lg:grid-cols-2">
         {bookmarks.map((row) => (
           <BookmarkCard key={row.bookmark.id} row={row} />
         ))}

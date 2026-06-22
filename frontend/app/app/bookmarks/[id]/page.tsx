@@ -20,7 +20,7 @@ export default async function BookmarkDetailPage({ params }: { params: Promise<{
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-5">
+    <div className="mx-auto max-w-3xl space-y-5">
       <div className="flex items-center justify-between">
         <Button render={<Link href="/app" />} variant="ghost">
           <HugeiconsIcon icon={ArrowLeft01Icon} />
@@ -34,7 +34,7 @@ export default async function BookmarkDetailPage({ params }: { params: Promise<{
 
       <BookmarkCard row={row} />
 
-      <Card>
+      <Card className="border-primary/10">
         <CardHeader>
           <CardTitle>Private note</CardTitle>
         </CardHeader>

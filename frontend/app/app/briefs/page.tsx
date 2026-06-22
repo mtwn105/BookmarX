@@ -15,8 +15,8 @@ export default async function BriefsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <p className="text-sm font-medium text-primary">Briefs</p>
-        <h1 className="mt-1 text-3xl font-semibold tracking-tight">What deserves another look</h1>
+        <p className="text-xs font-bold uppercase tracking-[0.14em] text-ai">Intelligent briefs</p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">What deserves another look</h1>
         <p className="mt-2 text-muted-foreground">
           Automatic editorial summaries connect the ideas, tools, and themes in recent bookmarks.
         </p>
@@ -24,15 +24,15 @@ export default async function BriefsPage() {
 
       {latest ? (
         <article className="mx-auto max-w-3xl">
-          <Card className="gap-0">
+          <Card className="gap-0 border-border bg-white shadow-[0_18px_60px_rgba(13,19,43,0.06)]">
             <CardHeader className="pb-6">
               <div className="flex items-center gap-2">
-                <Badge variant="secondary">Latest brief</Badge>
+                <Badge className="bg-ai/10 text-ai" variant="secondary">Latest brief</Badge>
                 <time className="text-xs text-muted-foreground" dateTime={latest.generatedFor}>
                   {formatBriefDate(latest.generatedFor)}
                 </time>
               </div>
-              <CardTitle className="mt-4 text-2xl font-semibold sm:text-3xl">{latest.title}</CardTitle>
+              <CardTitle className="mt-4 max-w-2xl text-2xl font-semibold tracking-[-0.025em] sm:text-3xl">{latest.title}</CardTitle>
             </CardHeader>
             <Separator />
             <CardContent className="py-6">
@@ -57,7 +57,7 @@ export default async function BriefsPage() {
           <h2 className="text-sm font-medium text-muted-foreground">Previous briefs</h2>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             {archive.map((brief) => (
-              <Card key={brief.id} size="sm">
+              <Card className="transition-[border-color,box-shadow] hover:border-ai/20 hover:shadow-md" key={brief.id} size="sm">
                 <CardHeader>
                   <time className="text-xs text-muted-foreground">{formatBriefDate(brief.generatedFor)}</time>
                   <CardTitle className="mt-1">{brief.title}</CardTitle>

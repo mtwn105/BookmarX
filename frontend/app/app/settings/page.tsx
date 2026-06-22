@@ -17,8 +17,8 @@ export default async function SettingsPage() {
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <p className="text-sm font-medium text-primary">Settings</p>
-        <h1 className="mt-1 text-3xl font-semibold tracking-tight">Account and automation</h1>
+        <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">Settings</p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">Account and automation</h1>
         <p className="mt-2 text-muted-foreground">BookmarX manages AI configuration at the deployment level.</p>
       </div>
 
